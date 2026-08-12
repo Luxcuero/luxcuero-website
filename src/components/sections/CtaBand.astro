@@ -1,0 +1,56 @@
+---
+import CtaList from "../CtaList.astro";
+import SanityImage from "../SanityImage.astro";
+import {bandStyle} from "../../lib/bands";
+
+interface Props {
+  section: any;
+}
+
+const {section} = Astro.props;
+const {
+  eyebrow,
+  heading,
+  body,
+  image,
+  imageShape = "petal",
+  prominentHeading = false,
+  ctas,
+  background,
+} = section;
+
+/* The service pages mask this image with an SVG clip path whose top-right corner has a
+   50% radius and the other three 12.5% — mirrored here in CSS. */
+const shapeStyle =
+  imageShape === "petal"
+    ? "border-radius: 12.5% 50% 12.5% 12.5%;"
+    : "border-radius: 1rem;";
+---
+
+<section class="py-8" style={bandStyle(background)}>
+  <div class="container">
+    <div class="flex flex-wrap items-center -mx-[15px]">
+      <div class="w-full lg:w-5/12 px-[15px] pt-4 pb-0">
+        <SanityImage
+          image={image}
+          width={720}
+          height={720}
+          class="w-full aspect-square object-cover"
+          style={shapeStyle}
+        />
+      </div>
+      <div class="w-full lg:w-7/12 px-[15px] py-4">
+        {eyebrow && <p class="font-bold mb-6" style="color: var(--color-gold);">{eyebrow}</p>}
+        {
+          prominentHeading ? (
+            <h2 class="text-[32px] font-bold mb-4">{heading}</h2>
+          ) : (
+            <h3 class="rfs-32 mb-2">{heading}</h3>
+          )
+        }
+        {body && <p class="mb-8">{body}</p>}
+        <CtaList ctas={ctas} />
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,106 @@
+---
+interface Props {
+  field: any;
+  /* The two forms wrap their controls in different class families — `sol-` on the
+     business enquiry, `cu-` on the quote form — but the controls themselves are the
+     same, so the prefix is passed in rather than duplicating this component. */
+  prefix: "sol" | "cu";
+  id: string;
+  datePickerLabel?: string;
+}
+
+const {field, prefix, id, datePickerLabel} = Astro.props;
+const {label, name, inputType, placeholder, required, rows, options, optionsLayout, helpText} =
+  field;
+
+const control = `${prefix}-control`;
+const isCheckboxes = inputType === "checkboxes";
+---
+
+{
+  /* Checkbox groups are labelled by a span rather than a <label>, since a label may only
+     point at one control. */
+  isCheckboxes ? (
+    <span class:list={[`${prefix}-label`, `${prefix}-label-plain`]} id={`${id}-label`}>
+      <span>{label}</span>
+      {required && <span class={`${prefix}-mark`}> *</span>}
+    </span>
+  ) : (
+    <label class={`${prefix}-label`} for={id}>
+      <span>{label}</span>
+      {required && <span class={`${prefix}-mark`}> *</span>}
+    </label>
+  )
+}
+
+{
+  inputType === "textarea" && (
+    <textarea id={id} name={name} required={required} rows={rows ?? 3} placeholder={placeholder} class={control} />
+  )
+}
+
+{
+  inputType === "file" && (
+    <input id={id} name={name} type="file" multiple accept="image/*" required={required} class={control} />
+  )
+}
+
+{
+  inputType === "date" && (
+    /* Native date control, with the source's trailing icon button wired to open it so
+       the affordance still works. */
+    <div class={`${prefix}-date`}>
+      <input id={id} name={name} type="date" required={required} class={control} />
+      <button
+        type="button"
+        class={`${prefix}-date-icon`}
+        data-date-for={id}
+        aria-label={datePickerLabel}
+      >
+        <i class="fa fa-calendar" aria-hidden="true" />
+      </button>
+    </div>
+  )
+}
+
+{
+  isCheckboxes && (
+    <div
+      class:list={[`${prefix}-checks`, optionsLayout === "inline" && `${prefix}-checks-inline`]}
+      role="group"
+      aria-labelledby={`${id}-label`}
+    >
+      {(options ?? []).map((option: string, i: number) => (
+        <div class:list={[`${prefix}-check-col`, optionsLayout !== "inline" && `${prefix}-check-col-full`]}>
+          <div class={`${prefix}-check`}>
+            <input
+              type="checkbox"
+              id={`${id}-${i}`}
+              name={name}
+              value={option}
+              class={`${prefix}-check-input`}
+            />
+            <label class={`${prefix}-check-label`} for={`${id}-${i}`}>
+              {option}
+            </label>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+{
+  ["text", "tel", "email"].includes(inputType) && (
+    <input
+      id={id}
+      name={name}
+      type={inputType}
+      required={required}
+      placeholder={placeholder}
+      class={control}
+    />
+  )
+}
+
+{helpText && <div class={`${prefix}-field-description`}>{helpText}</div>}

@@ -1,0 +1,183 @@
+---
+import SanityImage from "../SanityImage.astro";
+import {bandStyle} from "../../lib/bands";
+import {hrefFor, linkAttrs} from "../../lib/links";
+
+interface Props {
+  section: any;
+}
+
+const {section} = Astro.props;
+const {layout = "tile", eyebrow, heading, cards = [], readMoreLabel, background} = section;
+
+/* The tile row is laid out as six twelfth-columns. With five cards the source centres the
+   set by offsetting the first by half a column; with six it fills the row exactly. */
+const tileOffset = cards.length === 5;
+---
+
+{
+  layout === "feature" && (
+    <section class="py-16" style={bandStyle(background)}>
+      <div class="container">
+        {heading && <h2 class="text-center text-4xl mb-12 text-white">{heading}</h2>}
+        <div class="grid md:grid-cols-3 gap-8">
+          {cards.map((card: any) => (
+            <div class="rounded-2xl p-8 h-full flex flex-col" style="background-color: #141414;">
+              <a href={hrefFor(card.link)} {...linkAttrs(card.link)} class="block mb-6">
+                <SanityImage
+                  image={card.image}
+                  alt=""
+                  width={520}
+                  height={390}
+                  class="rounded-xl w-full aspect-[4/3] object-cover"
+                />
+              </a>
+              <h3 class="text-white text-center text-[22px] font-bold mb-4">{card.title}</h3>
+              <p class="text-white/70 text-center leading-relaxed grow">{card.description}</p>
+              <p class="text-center mt-6">
+                <a
+                  href={hrefFor(card.link)}
+                  {...linkAttrs(card.link)}
+                  class="inline-flex items-center gap-2 font-semibold text-sm uppercase tracking-wide"
+                  style="color: var(--color-gold);"
+                >
+                  {readMoreLabel}
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </a>
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+{
+  layout === "tile" && (
+    <>
+      {/* Section heading (source: s_closer_look pt32) */}
+      <section class="pt-8 pb-0" style={bandStyle(background)}>
+        <div class="container text-center">
+          {eyebrow && (
+            <p class="text-[12px] font-bold mb-2" style="color: var(--color-gold);">
+              {eyebrow}
+            </p>
+          )}
+          {heading && <h3 class="rfs-32 font-bold">{heading}</h3>}
+        </div>
+      </section>
+
+      {/* Cards (source: s_three_columns; each card is col-lg-2 of a 12-column row) */}
+      <section class:list={["pt-2", tileOffset ? "pb-16" : "pb-4"]} style={bandStyle(background)}>
+        <div class="container">
+          {/* Mirrors Bootstrap's grid: 15px gutters via negative row margin. */}
+          <div class="flex flex-wrap items-stretch -mx-[15px]">
+            {cards.map((card: any, i: number) => (
+              <div
+                class:list={[
+                  "px-[15px] pt-4",
+                  tileOffset && i === cards.length - 1
+                    ? "w-full lg:w-[16.666667%] pb-0 lg:pb-4"
+                    : "w-1/2 lg:w-[16.666667%] pb-4",
+                  tileOffset && i === 0 && "lg:ml-[8.333333%]",
+                ]}
+              >
+                <div class="h-full bg-white rounded-[6.4px] flex flex-col">
+                  <figure class="mb-0 aspect-square overflow-hidden rounded-t-[6.4px]">
+                    <SanityImage
+                      image={card.image}
+                      alt=""
+                      width={400}
+                      height={400}
+                      class="w-full h-full object-cover"
+                    />
+                  </figure>
+                  <div class="p-4">
+                    <h3 class="text-center text-[20px] lg:text-[22px] font-bold leading-[1.2] mb-2">
+                      {card.title}
+                    </h3>
+                    <p class="text-center">{card.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
+
+{
+  layout === "showcase" && (
+    <section class="py-16" style={bandStyle(background)}>
+      <div style="width: 100%; max-width: 1400px; margin-inline: auto; padding-inline: 1.5rem;">
+        <div class="showcase-grid">
+          {cards.map((card: any) => (
+            <div style="border-radius: 1rem; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; background: white;">
+              <SanityImage
+                image={card.image}
+                alt={card.title}
+                width={400}
+                height={400}
+                style="aspect-ratio: 1/1; object-fit: cover; width: 100%; display: block;"
+              />
+              <div style="padding: 1rem; display: flex; flex-direction: column; flex-grow: 1;">
+                <h3 style="font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; color: #1a1a1a;">
+                  {card.title}
+                </h3>
+                <p style="font-size: 0.8rem; line-height: 1.6; flex-grow: 1; color: var(--color-gold);">
+                  {card.description}
+                </p>
+              </div>
+              {card.link ? (
+                <a
+                  href={hrefFor(card.link)}
+                  {...linkAttrs(card.link)}
+                  style="padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 600; border-top: 1px solid rgba(0,0,0,0.06); color: var(--color-gold); text-decoration: none; display: block;"
+                >
+                  {readMoreLabel}
+                </a>
+              ) : (
+                <span style="padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 600; border-top: 1px solid rgba(0,0,0,0.06); color: var(--color-gold); display: block;">
+                  {readMoreLabel}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* Five across on desktop, as the source lays them out. Declared here rather than as a
+     Tailwind arbitrary value so the count stays legible alongside its fallbacks. */
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+  @media (max-width: 1024px) {
+    .showcase-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 640px) {
+    .showcase-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

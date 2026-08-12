@@ -1,0 +1,54 @@
+---
+import {PortableText} from "astro-portabletext";
+import GithubSlugger from "github-slugger";
+
+import PortableTextFigure from "./PortableTextFigure.astro";
+import PortableTextLink from "./PortableTextLink.astro";
+import PortableTextHeading from "./PortableTextHeading.astro";
+import PortableTextMasonry from "./PortableTextMasonry.astro";
+import PortableTextPicture from "./PortableTextPicture.astro";
+
+interface Props {
+  value: any;
+}
+
+const {value} = Astro.props;
+
+/* Astro's markdown pipeline gave every heading an `id` via rehype-slug, which is what
+   deep links into a post point at. astro-portabletext does not, so the ids are computed
+   here with the same slugger rehype-slug uses — including its de-duplication, which is
+   why one instance walks the whole document rather than each heading slugging itself.
+   The id is stashed on a copy of the block; the renderer reads it back off the node. */
+const slugger = new GithubSlugger();
+
+const HEADING_STYLES = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
+
+const blocks = (value ?? []).map((block: any) => {
+  if (block?._type !== "block" || !HEADING_STYLES.has(block.style)) return block;
+  const text = (block.children ?? [])
+    .map((child: any) => child.text ?? "")
+    .join("")
+    .trim();
+  if (!text) return block;
+  return {...block, _headingId: slugger.slug(text)};
+});
+
+const components = {
+  type: {
+    figure: PortableTextFigure,
+    masonryBlock: PortableTextMasonry,
+    pictureBlock: PortableTextPicture,
+  },
+  block: {
+    h1: PortableTextHeading,
+    h2: PortableTextHeading,
+    h3: PortableTextHeading,
+    h4: PortableTextHeading,
+  },
+  mark: {
+    link: PortableTextLink,
+  },
+};
+---
+
+<PortableText value={blocks} components={components} />

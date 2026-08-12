@@ -1,0 +1,20 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import BlogIndexLayout from "../../components/BlogIndexLayout.astro";
+import {getPosts, getSiteSettings} from "../../lib/content";
+
+const [posts, settings] = await Promise.all([getPosts(), getSiteSettings()]);
+
+const blog = settings?.blog ?? {};
+const heading = blog.heading;
+const tagline = blog.tagline;
+---
+
+<Layout title={[heading, blog.titleSuffix].filter(Boolean).join(" | ")} description={tagline}>
+  <BlogIndexLayout
+    heading={heading}
+    tagline={tagline}
+    posts={posts}
+    settings={settings}
+  />
+</Layout>

@@ -1,0 +1,148 @@
+---
+import SanityImage from "./SanityImage.astro";
+
+interface Props {
+  node: any;
+}
+
+const {node} = Astro.props;
+const items = node?.items ?? [];
+---
+
+<section
+  class="s-masonry"
+  style={`padding-top: ${node.spacingTop ?? 48}px; padding-bottom: ${node.spacingBottom ?? 48}px;`}
+>
+  <div class="masonry-grid">
+    {
+      items.map((item: any) => (
+        <div
+          class:list={[
+            "masonry-item",
+            item.kind === "image" && "is-image",
+            item.tone,
+            item.centered && "is-centered",
+          ]}
+          style={[
+            item.area ? `--area: ${item.area};` : "",
+            item.order !== undefined ? `--order: ${item.order};` : "",
+          ].join(" ")}
+        >
+          {item.kind === "image" ? (
+            <SanityImage image={item.image} width={900} />
+          ) : (
+            <>
+              {item.heading && (
+                <h2 class:list={[item.headingSize]}>
+                  <span>{item.heading}</span>
+                </h2>
+              )}
+              {item.body
+                ?.split("\n\n")
+                .filter(Boolean)
+                .map((para: string) => <p>{para}</p>)}
+            </>
+          )}
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<style is:global>
+  /* A 12-column, 50px-row grid with items placed by grid-area, matching Odoo's
+     o_grid_mode. Below lg the source drops to a plain stack in `order` sequence. */
+  .post-body .s-masonry .masonry-grid,
+  .post-body .masonry-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* Stacked, the source's row bleeds 15px past the text column on each side
+       (Bootstrap's negative row gutters). */
+    margin-inline: -15px;
+  }
+  .post-body .masonry-item {
+    order: var(--order, 0);
+    display: flex;
+    flex-direction: column;
+    border-radius: 9.6px;
+    overflow: hidden;
+  }
+  @media (min-width: 992px) {
+    .post-body .masonry-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(10, 50px);
+      gap: 16px;
+      margin-inline: 0;
+    }
+    .post-body .masonry-item {
+      grid-area: var(--area);
+    }
+    /* In grid mode the image fills its cell; stacked, it keeps its own ratio. */
+    .post-body .masonry-item.is-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  .post-body .masonry-item:not(.is-image) {
+    padding: 20px;
+  }
+  .post-body .masonry-item.is-centered {
+    justify-content: center;
+    text-align: center;
+  }
+  .post-body .masonry-item.is-image {
+    align-items: center;
+  }
+  /* Stacked, the image keeps its natural size (capped by the column) exactly as the
+     source's .img-fluid does; in grid mode it is cropped to fill its cell instead. */
+  .post-body .masonry-item img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 9.6px;
+  }
+  .post-body .masonry-item h2 {
+    margin-bottom: 8px;
+  }
+  .post-body .masonry-item p:last-child {
+    margin-bottom: 0;
+  }
+  /* Odoo colour presets o_cc2 / o_cc3 / o_cc4. */
+  .post-body .masonry-item.cc2 {
+    background-color: #efe9e0;
+    color: #212529;
+  }
+  .post-body .masonry-item.cc2 h2 {
+    color: #0d0d0d;
+  }
+  .post-body .masonry-item.cc3 {
+    background-color: #dca032;
+    color: #212529;
+  }
+  .post-body .masonry-item.cc3 h2 {
+    color: #212529;
+  }
+  .post-body .masonry-item.cc4 {
+    background-color: #9f8140;
+    color: #fff;
+  }
+  .post-body .masonry-item.cc4 h2 {
+    color: #fff;
+  }
+
+  /* Odoo font-size helpers used inside the snippets. */
+  .post-body .h3-fs {
+    font-size: min(32px, calc(21.2px + 0.9vw));
+  }
+  .post-body .display-1-fs {
+    font-size: min(80px, calc(26px + 4.5vw));
+  }
+  .post-body .display-2-fs {
+    font-size: min(72px, calc(25.2px + 3.9vw));
+  }
+  .post-body .display-3-fs {
+    font-size: min(64px, calc(24.4px + 3.3vw));
+  }
+</style>

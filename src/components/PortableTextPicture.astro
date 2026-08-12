@@ -1,0 +1,48 @@
+---
+import SanityImage from "./SanityImage.astro";
+
+interface Props {
+  node: any;
+}
+
+const {node} = Astro.props;
+---
+
+<section
+  class="s-picture"
+  style={`padding-top: ${node.spacingTop ?? 64}px; padding-bottom: ${node.spacingBottom ?? 64}px;`}
+>
+  <div class="container-small">
+    {node.heading && <h2 class="text-center">{node.heading}</h2>}
+    <figure class="post-figure">
+      <SanityImage image={node.image} width={1440} />
+      {node.caption && <figcaption>{node.caption}</figcaption>}
+    </figure>
+  </div>
+</section>
+
+<style is:global>
+  /* ── "Title - Image" snippet (s_picture) ──────────────────────────────── */
+  .post-body .s-picture .container-small {
+    width: 100%;
+  }
+  .post-body .s-picture h2 {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .post-body .post-figure {
+    width: 100%;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .post-body .post-figure img {
+    width: 100%;
+    height: auto;
+  }
+  .post-body .post-figure figcaption {
+    margin-top: 8px;
+    font-size: 15.75px;
+    line-height: 23.625px;
+    color: rgba(33, 37, 41, 0.75);
+  }
+</style>

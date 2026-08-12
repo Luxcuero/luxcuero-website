@@ -1,0 +1,624 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PortableTextBody from "../../components/PortableTextBody.astro";
+import SanityImage from "../../components/SanityImage.astro";
+import {getPost, getSiteSettings} from "../../lib/content";
+import {dateLong} from "../../lib/dates";
+import {urlFor} from "../../lib/image";
+
+export async function getStaticPaths() {
+  const {getPosts: loadPosts} = await import("../../lib/content");
+  const posts = await loadPosts();
+
+  return posts.map((post, i) => ({
+    params: {slug: post.slug},
+    /* The source's footer band always advances to the following post, wrapping around at
+       the end of the list. */
+    props: {next: posts[(i + 1) % posts.length]},
+  }));
+}
+
+const {slug} = Astro.params;
+const {next} = Astro.props;
+const [post, settings] = await Promise.all([getPost(slug!), getSiteSettings()]);
+
+const ui = settings?.post ?? {};
+const blogHeading = settings?.blog?.heading;
+
+if (!post) throw new Error(`No post found for slug "${slug}"`);
+
+const cover = post.cover?.asset ? urlFor(post.cover).width(2000).auto("format").url() : null;
+const nextCover = next?.cover?.asset ? urlFor(next.cover).width(2000).auto("format").url() : null;
+
+const shareUrl = new URL(`/blog/${post.slug}`, Astro.site).href;
+const shareTitle = encodeURIComponent(post.title);
+/* Icon and colour per platform; the label and which platforms appear come from
+   Site settings, so the set can be changed without touching this file. Font Awesome 4.7
+   predates the X rebrand and only ships the bird, so X gets an inline mark instead. */
+const SHARE_STYLES: Record<string, {icon: string; color: string; inlineX?: boolean}> = {
+  facebook: {icon: "fa-facebook", color: "#3b5999"},
+  twitter: {icon: "fa-twitter", color: "#000000", inlineX: true},
+  linkedin: {icon: "fa-linkedin", color: "#0077b5"},
+  whatsapp: {icon: "fa-whatsapp", color: "#25d366"},
+  pinterest: {icon: "fa-pinterest", color: "#c8232c"},
+  email: {icon: "fa-envelope", color: "#FF9C00"},
+};
+
+const SHARE_HREFS: Record<string, string> = {
+  facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+  twitter: `https://twitter.com/intent/tweet?text=${shareTitle}&url=${encodeURIComponent(shareUrl)}`,
+  linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+  whatsapp: `https://wa.me/?text=${shareTitle}%20${encodeURIComponent(shareUrl)}`,
+  pinterest: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&description=${shareTitle}`,
+  email: `mailto:?subject=${shareTitle}&body=${encodeURIComponent(shareUrl)}`,
+};
+
+const shareLinks = (ui.shareTargets ?? [])
+  .filter((target: any) => SHARE_HREFS[target.platform])
+  .map((target: any) => ({
+    ...SHARE_STYLES[target.platform],
+    label: target.label,
+    href: SHARE_HREFS[target.platform],
+  }));
+
+const tags = post.tags ?? [];
+---
+
+{/* The source serves blog posts under a solid header that pushes the cover down, unlike
+    the transparent overlay used on the marketing pages. */}
+<Layout
+  title={`${post.title} | ${settings?.siteName}`}
+  description={post.seo?.description ?? post.excerpt}
+  transparentHeader={false}
+>
+  <!-- Cover band (source: o_wblog_post_page_cover o_half_screen_height, min-height 55vh) -->
+  <section
+    class:list={["post-cover-band", !cover && "no-cover"]}
+    style={cover ? `background-image: url('${cover}');` : undefined}
+  >
+    <span class="post-cover-filter"></span>
+    <div class="container post-cover-inner">
+      <div class="post-cover-title">
+        <h1 class="rfs-56">{post.title}</h1>
+        {post.subtitle && <div class="post-cover-subtitle">{post.subtitle}</div>}
+      </div>
+      <a
+        href="#post-main"
+        class="post-cover-jump"
+        aria-label={ui.jumpToContent}
+        title={ui.jumpToContent}
+      >
+        <i class="fa fa-angle-down" aria-hidden="true"></i>
+      </a>
+    </div>
+  </section>
+
+  <section id="post-main" class="container post-main">
+    <div class="post-read-wrap">
+      <div class="post-read-cols">
+        <div class="post-content-col">
+          <nav class="post-breadcrumb" aria-label={ui.breadcrumbLabel}>
+            <a href="/blog"
+              ><i class="fa fa-angle-left post-breadcrumb-back" aria-hidden="true"></i>{blogHeading}</a
+            >
+            <span class="post-breadcrumb-current">{post.title}</span>
+          </nav>
+
+          <div class="post-info">
+            <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i>
+            <span>{dateLong(post.publishedAt)}</span>
+            {
+              post.author?.name && (
+                <span class="post-info-by">
+                  {ui.byLabel}
+                  <span class="post-info-author">
+                    <SanityImage image={post.author.avatar} alt="" width={38} height={38} />
+                    <span>{post.author.name}</span>
+                  </span>
+                </span>
+              )
+            }
+            <span class="post-info-comments">| {ui.noComments}</span>
+          </div>
+
+          <div class="post-body">
+            <PortableTextBody value={post.body} />
+          </div>
+
+          {
+            tags.length > 0 && (
+              <div class="post-body-tags">
+                <div>
+                  #
+                  {tags.map((tag: any) => (
+                    <a class="post-badge" href={`/blog/tag/${tag.slug}`}>
+                      {tag.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+        </div>
+
+        <aside class="post-sidebar-col">
+          <div class="post-sidebar-block">
+            <h6 class="post-sidebar-title">{ui.shareHeading}</h6>
+            <div class="post-share">
+              {
+                shareLinks.map((s) => (
+                  <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}>
+                    {s.inlineX ? (
+                      <span class="fa" style={`color: ${s.color};`} aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg>
+                      </span>
+                    ) : (
+                      <i class:list={["fa", s.icon]} style={`color: ${s.color};`} aria-hidden="true" />
+                    )}
+                  </a>
+                ))
+              }
+            </div>
+          </div>
+
+          {
+            tags.length > 0 && (
+              <div class="post-sidebar-block">
+                <h6 class="post-sidebar-title">{ui.tagsHeading}</h6>
+                <div class="post-sidebar-tags">
+                  {tags.map((tag: any) => (
+                    <a class="post-badge post-badge-lg" href={`/blog/tag/${tag.slug}`}>
+                      {tag.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="post-read-wrap">
+      <div class="post-comments">
+        <div class="post-comments-cta">
+          <a class="post-login-btn" href="/contactus"><b>{ui.commentsCtaLabel}</b></a> {ui.commentsCtaSuffix}
+        </div>
+        {/* Same placeholder the source's chatter renders when a post has no comments:
+            a greyscaled 😶 above the message. */}
+        <div class="post-comments-empty">
+          <span class="post-comments-emoji" aria-hidden="true">😶</span>
+          <span>{ui.commentsEmpty}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next post (source: o_wblog_post_page_cover_footer, min-height 33vh) -->
+  {
+    next && (
+      <section class="post-next">
+        <a
+          class:list={["post-next-cover", !nextCover && "no-cover"]}
+          href={`/blog/${next.slug}`}
+          style={nextCover ? `background-image: url('${nextCover}');` : undefined}
+          aria-label={`${ui.nextLabel}: ${next.title}`}
+        >
+          <span class="post-cover-filter" />
+          <div class="container post-next-inner">
+            <div class="post-next-title rfs-56">{next.title}</div>
+            <div class="post-next-toggle">
+              <span>
+                <i class="fa fa-angle-right" aria-hidden="true" title={ui.nextLabel} />
+              </span>
+            </div>
+          </div>
+        </a>
+      </section>
+    )
+  }
+</Layout>
+
+<style is:global>
+  /* ── Cover band ────────────────────────────────────────────────────────────
+     55vh on the source (o_half_screen_height). The 96px top margin stands in for
+     the source's static header, since ours is fixed and overlays the page. */
+  .post-cover-band {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 55vh;
+    margin-top: 96px;
+    /* Gold sits under the cover image and shows through for posts that have none. */
+    background-color: #dca032;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+  }
+  /* The source layers 90%-black at 20% opacity — an effective 18% black. */
+  .post-cover-filter {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    opacity: 0.2;
+    pointer-events: none;
+  }
+  /* The source drops the title just under 40% of the way down the band and pins the
+     chevron 48px off the bottom; those two offsets are what set the band's rhythm. */
+  .post-cover-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding-top: 21.8vh;
+    text-align: center;
+  }
+  .post-cover-title h1 {
+    font-family: var(--font-heading);
+    font-weight: 300;
+    line-height: 1.2;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .post-cover-subtitle {
+    font-size: 18px;
+    line-height: 27px;
+    font-weight: 300;
+    color: #fff;
+  }
+  .post-cover-jump {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    margin: auto auto 48px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    text-decoration: none;
+  }
+  .post-cover-jump .fa {
+    font-size: 48px;
+    line-height: 1;
+  }
+
+  /* ── Reading column ────────────────────────────────────────────────────────
+     The source caps the whole block at 1000px and the article itself at 720px,
+     leaving the sidebar the remainder plus a 48px gutter. */
+  .post-main {
+    padding-top: 24px;
+    padding-bottom: 48px;
+  }
+  .post-read-wrap {
+    max-width: 1000px;
+    margin-inline: auto;
+  }
+  .post-read-cols {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .post-content-col {
+    width: 100%;
+    flex-shrink: 0;
+  }
+  @media (min-width: 992px) {
+    .post-read-cols {
+      flex-direction: row;
+    }
+    .post-content-col {
+      max-width: 720px;
+    }
+    .post-sidebar-col {
+      flex: 1;
+      padding-left: 48px;
+    }
+  }
+
+  /* ── Breadcrumb + byline ───────────────────────────────────────────────── */
+  .post-breadcrumb {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    font-size: 16px;
+    line-height: 24px;
+    margin-bottom: 16px;
+  }
+  .post-breadcrumb a {
+    color: #ff9c00;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .post-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+  .post-breadcrumb-back {
+    margin-right: 0.25rem;
+  }
+  .post-breadcrumb-current {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .post-breadcrumb-current::before {
+    content: "/";
+    padding-inline: 0.5rem;
+    color: #6c757d;
+  }
+  /* Below lg the source swaps the trail for a back chevron on the parent link only. */
+  @media (min-width: 992px) {
+    .post-breadcrumb-back {
+      display: none;
+    }
+  }
+  @media (max-width: 991px) {
+    .post-breadcrumb-current {
+      display: none;
+    }
+  }
+
+  .post-info {
+    font-size: 16px;
+    line-height: 24px;
+    color: rgba(33, 37, 41, 0.75);
+    margin-bottom: 8px;
+  }
+  .post-info-by {
+    display: inline-flex;
+    align-items: center;
+    /* Stands in for the word space JSX strips between the date and "por". */
+    margin-left: 0.25rem;
+  }
+  .post-info-author {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-inline: 8px 4px;
+    line-height: 1;
+  }
+  /* The other half of the word space before the comment count; together with the
+     author chip's 4px it reproduces the source's 8px gap. */
+  .post-info-comments {
+    margin-left: 4px;
+  }
+  .post-info-author img {
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  /* ── Article body ──────────────────────────────────────────────────────────
+     18px/27px at weight 300 throughout, the source's o_wblog_read_text. */
+  .post-body {
+    font-size: 18px;
+    line-height: 27px;
+    font-weight: 300;
+    color: #212529;
+  }
+  /* Article headings take the body colour, not the near-black heading ink that
+     global.css applies site-wide. */
+  .post-body :is(h1, h2, h3, h4, h5, h6) {
+    color: #212529;
+    margin-bottom: 8px;
+  }
+  .post-body h1 {
+    font-size: min(100px, calc(28px + 6vw));
+    line-height: 1.2;
+  }
+  .post-body h2 {
+    font-size: min(40px, calc(22px + 1.5vw));
+    line-height: 1.2;
+  }
+  .post-body h3 {
+    font-size: min(32px, calc(21.2px + 0.9vw));
+    line-height: 1.2;
+  }
+  .post-body p {
+    margin-bottom: 16px;
+  }
+  .post-body a {
+    color: #ff9c00;
+    text-decoration: none;
+  }
+  .post-body a:hover {
+    text-decoration: underline;
+  }
+  .post-body strong,
+  .post-body b {
+    font-weight: 700;
+  }
+  .post-body ul,
+  .post-body ol {
+    padding-left: 32px;
+    margin-bottom: 16px;
+  }
+  .post-body ul {
+    list-style: disc;
+  }
+  .post-body ol {
+    list-style: decimal;
+  }
+  .post-body li::marker {
+    color: inherit;
+  }
+  .post-body blockquote {
+    padding: 8px 16px;
+    margin-bottom: 16px;
+    border-left: 5px solid #dee2e6;
+    font-style: italic;
+  }
+  .post-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6.4px;
+  }
+
+  /* ── Tag badges ────────────────────────────────────────────────────────── */
+  .post-body-tags {
+    color: rgba(33, 37, 41, 0.75);
+  }
+  .post-badge {
+    display: inline-block;
+    max-width: 100%;
+    padding: 4.2px 7.8px;
+    margin-right: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 12px;
+    color: #626262;
+    background-color: #f6f6f6;
+    border: 1px solid #a2a2a2;
+    border-radius: 800px;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+  .post-badge:hover {
+    color: var(--color-ink);
+    background-color: #ebebeb;
+    text-decoration: none;
+  }
+  /* The sidebar list renders the same badges one step larger (source: .h5 wrapper). */
+  .post-badge-lg {
+    padding: 5.25px 9.75px;
+    font-size: 15px;
+    line-height: 15px;
+    font-family: var(--font-heading);
+  }
+
+  /* ── Sidebar ───────────────────────────────────────────────────────────── */
+  .post-sidebar-block {
+    padding-bottom: 48px;
+  }
+  .post-sidebar-title {
+    font-family: var(--font-heading);
+    color: #212529;
+    font-size: 16px;
+    line-height: 19.2px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #dee2e6;
+  }
+  /* 10px gutters put five icons on the first row and wrap the sixth, as on the source. */
+  .post-share {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .post-share a {
+    display: inline-block;
+    margin-block: 3.2px;
+  }
+  .post-share .fa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    border-radius: 6.4px;
+    background-color: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s ease;
+  }
+  .post-share a:hover .fa {
+    transform: translateY(-1px);
+  }
+  .post-sidebar-tags {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  /* ── Comments ──────────────────────────────────────────────────────────── */
+  .post-comments {
+    max-width: 720px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    font-size: 14px;
+  }
+  .post-comments-cta {
+    margin-bottom: 24px;
+  }
+  .post-login-btn {
+    display: inline-block;
+    font-family: var(--font-btn);
+    font-size: 14px;
+    line-height: 21px;
+    padding: 1px 5px;
+    border: 1px solid #dca032;
+    border-radius: 160px;
+    background-color: #dca032;
+    color: #212529;
+    text-decoration: none;
+  }
+  .post-comments-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 144px;
+    font-size: 14px;
+    line-height: 21px;
+    color: #212529;
+  }
+  .post-comments-emoji {
+    font-size: min(40px, calc(22px + 1.5vw));
+    line-height: 1.2;
+    filter: grayscale(1);
+  }
+
+  /* ── Next post band ────────────────────────────────────────────────────── */
+  .post-next-cover {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 33vh;
+    background-color: #dca032;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    text-decoration: none;
+  }
+  .post-next-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-around;
+    text-align: center;
+  }
+  .post-next-title {
+    font-family: var(--font-heading);
+    font-weight: 300;
+    line-height: 1.2;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .post-next-toggle span {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4.8px;
+    color: #fff;
+  }
+  .post-next-toggle .fa {
+    font-size: 72px;
+    line-height: 1;
+  }
+</style>

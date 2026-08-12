@@ -1,0 +1,137 @@
+---
+import SanityImage from "../SanityImage.astro";
+import {bandStyle} from "../../lib/bands";
+import {hrefFor, linkAttrs} from "../../lib/links";
+
+interface Props {
+  section: any;
+}
+
+const {section} = Astro.props;
+const {layout = "cards", eyebrow, heading, body, link, items = [], background} = section;
+---
+
+{
+  layout === "cards" && (
+    <>
+      {/* Heading block (source: s_closer_look pt32, dark) */}
+      <section class="pt-8 pb-0" style={bandStyle(background)}>
+        <div class="container">
+          <div class="mx-auto max-w-[720px] text-center">
+            {eyebrow && (
+              <p class="text-[14px] font-bold mb-2" style="color: var(--color-gold);">
+                {eyebrow}
+              </p>
+            )}
+            {heading && <h3 class="rfs-32 font-bold text-white">{heading}</h3>}
+          </div>
+        </div>
+      </section>
+
+      {/* Cards (source: s_three_columns pt8 pb64, dark; col-lg-3 = 4 across) */}
+      <section class="pt-2 pb-16" style={bandStyle(background)}>
+        <div class="container">
+          <div class="flex flex-wrap items-stretch -mx-[15px]">
+            {items.map((item: any) => (
+              <div class="w-1/2 lg:w-1/4 px-[15px] py-4">
+                <div
+                  class="h-full rounded-[6.4px] flex flex-col"
+                  style="background-color: #212529;"
+                >
+                  <figure class="mb-0 aspect-video overflow-hidden rounded-t-[6.4px]">
+                    <SanityImage
+                      image={item.image}
+                      alt=""
+                      width={480}
+                      height={270}
+                      class="w-full h-full object-cover"
+                    />
+                  </figure>
+                  <div class="p-4">
+                    <h3 class="rfs-24 text-[22px] text-center font-bold text-white leading-[1.2] mb-2">
+                      {item.title}
+                    </h3>
+                    <p class="text-center text-white">{item.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
+
+{
+  layout === "row" && (
+    <section style={`padding: 3.5rem 0; ${bandStyle(background) ?? ""}`}>
+      <div style="width: 100%; max-width: 1400px; margin-inline: auto; padding-inline: 1.5rem;">
+        <div class="feature-row">
+          {/* Left: title + description + button */}
+          <div>
+            {heading && (
+              <h2 style="font-family: var(--font-heading); font-size: 2rem; color: white; margin-bottom: 0.75rem; line-height: 1.2;">
+                {heading}
+              </h2>
+            )}
+            {body && (
+              <p style="color: rgba(255,255,255,0.65); margin-bottom: 1.5rem; font-size: 1rem; line-height: 1.6;">
+                {body}
+              </p>
+            )}
+            {link && (
+              <a
+                href={hrefFor(link.link)}
+                {...linkAttrs(link.link)}
+                class="btn-custom text-white text-sm"
+                style="border: 3px solid rgba(255,255,255,0.45); font-size: 0.75rem;"
+              >
+                {link.label}
+              </a>
+            )}
+          </div>
+
+          {items.map((item: any) => (
+            <div style="text-align: center;">
+              <div style="color: white; margin-bottom: 1rem;">
+                {item.iconType === "glyph" ? (
+                  <span class:list={["fa", `fa-${item.glyph}`, "fa-4x"]} />
+                ) : (
+                  <SanityImage image={item.image} alt="" width={128} class="mx-auto h-16 w-16 object-contain" />
+                )}
+              </div>
+              <h3 style="font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem; color: white; margin-bottom: 0.5rem;">
+                {item.title}
+              </h3>
+              <p style="font-size: 0.875rem; color: rgba(255,255,255,0.65); line-height: 1.6;">
+                {item.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* The heading column takes half again the width of each feature column, as the source
+     lays it out. */
+  .feature-row {
+    display: grid;
+    grid-template-columns: 3fr 2fr 2fr 2fr 2fr;
+    gap: 2rem;
+    align-items: center;
+  }
+  @media (max-width: 1024px) {
+    .feature-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 640px) {
+    .feature-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,127 @@
+---
+import SanityImage from "./SanityImage.astro";
+import {hrefFor, linkAttrs} from "../lib/links";
+
+interface Props {
+  settings: any;
+}
+
+const {settings} = Astro.props;
+const year = new Date().getFullYear();
+
+const columns = settings?.footerColumns ?? [];
+const socials = settings?.socialLinks ?? [];
+
+/* The source lays the four blocks out on a 12-column grid at fixed start positions. */
+const COLUMN_POSITIONS = [
+  "col-span-1 lg:col-span-2 lg:col-start-5",
+  "col-span-1 lg:col-span-2 lg:col-start-7",
+  "col-span-2 lg:col-span-3 lg:col-start-9",
+];
+
+/* One entry per platform the schema offers. A missing entry would render an empty
+   <path>, i.e. an invisible link — so the two the site does not use yet are here too. */
+const SOCIAL_PATHS: Record<string, string> = {
+  instagram:
+    "M12 2.2c3.2 0 3.6 0 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.25.07 1.63.07 4.81s-.01 3.56-.07 4.81c-.15 3.23-1.66 4.77-4.92 4.92-1.25.06-1.62.07-4.85.07s-3.6 0-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.25-.07-1.63-.07-4.81s.01-3.56.07-4.81c.15-3.23 1.67-4.77 4.92-4.92C8.4 2.2 8.8 2.2 12 2.2zm0 5.4a4.4 4.4 0 100 8.8 4.4 4.4 0 000-8.8zm0 7.26a2.86 2.86 0 110-5.72 2.86 2.86 0 010 5.72zm5.6-7.44a1.03 1.03 0 11-2.05 0 1.03 1.03 0 012.05 0z",
+  facebook:
+    "M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H16.7V3.7c-.28-.04-1.24-.12-2.36-.12-2.34 0-3.94 1.43-3.94 4.04v2.28H7.7V13H10.4v8h3.1z",
+  linkedin:
+    "M6.94 5a2 2 0 11-4 0 2 2 0 014 0zM7 8.48H3V21h4V8.48zm6.32 0H9.34V21h3.94v-6.57c0-3.66 4.77-4 4.77 0V21H22v-7.93c0-6.17-7.06-5.94-8.72-2.91l.04-1.68z",
+  youtube:
+    "M21.58 7.19a2.5 2.5 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42a2.5 2.5 0 00-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81a2.5 2.5 0 001.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.5 2.5 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15.02V8.98L15.2 12 10 15.02z",
+};
+---
+
+<footer class="text-white" style="background-color: var(--color-ink);">
+  <div class="container py-16">
+    <div class="grid grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-10">
+      <div class="col-span-2 lg:col-span-4">
+        <a href="/">
+          <SanityImage
+            image={settings?.footerLogo}
+            alt={settings?.siteName ?? "LuxCuero"}
+            width={300}
+            class="h-28 w-auto mb-6"
+          />
+        </a>
+        {
+          settings?.footerDescription && (
+            <p
+              class="italic text-white/90 leading-relaxed"
+              style="font-family: 'Montserrat', 'Odoo Unicode Support', sans-serif;"
+            >
+              {settings.footerDescription}
+            </p>
+          )
+        }
+        <div class="flex items-center gap-4 mt-6">
+          {
+            socials.map((social: any) => (
+              <a
+                href={social.url}
+                aria-label={social.platform}
+                class="text-2xl text-white"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d={SOCIAL_PATHS[social.platform] ?? ""} />
+                </svg>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      {
+        columns.map((column: any, i: number) => (
+          <div class={COLUMN_POSITIONS[i] ?? "col-span-2 lg:col-span-2"}>
+            <h3
+              class="uppercase text-base tracking-wide font-bold mb-4"
+              style="color: var(--color-gold); font-family: var(--font-body);"
+            >
+              {column.headingLink ? (
+                <a href={hrefFor(column.headingLink)} {...linkAttrs(column.headingLink)} class="hover:text-white">
+                  {column.heading}
+                </a>
+              ) : (
+                column.heading
+              )}
+            </h3>
+            <ul
+              class:list={["space-y-2", i === 2 ? "text-sm" : "text-xs"]}
+              style="color: #FF9C00;"
+            >
+              {column.links?.map((link: any) => (
+                <li>
+                  <a href={hrefFor(link.link)} {...linkAttrs(link.link)} class="hover:text-white">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            {i === 0 && settings?.copyright && (
+              <p class="text-[8px] text-white/50 mt-8">
+                © {year} {settings.copyright}
+              </p>
+            )}
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="flex justify-center mt-16">
+      <a
+        href="#top"
+        aria-label={settings?.ui?.backToTop}
+        class="flex items-center justify-center h-9 w-9 rounded-full text-white/70 hover:text-white transition-colors"
+        style="border: 1px solid rgba(255,255,255,0.2);"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </a>
+    </div>
+  </div>
+</footer>

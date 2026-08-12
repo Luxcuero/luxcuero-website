@@ -1,0 +1,14 @@
+---
+interface Props {
+  node: any;
+}
+
+const {node} = Astro.props;
+
+/* Set by PortableTextBody, which runs one slugger across the whole document so repeated
+   headings get the same -1/-2 suffixes rehype-slug produced. */
+const id = node?._headingId;
+const Tag = (node?.style ?? "h2") as "h1" | "h2" | "h3" | "h4";
+---
+
+<Tag id={id}><slot /></Tag>

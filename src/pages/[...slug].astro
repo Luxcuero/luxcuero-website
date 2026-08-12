@@ -1,0 +1,33 @@
+---
+import Layout from "../layouts/Layout.astro";
+import PageBuilder from "../components/PageBuilder.astro";
+import {getPage, getPageSlugs, getSiteSettings} from "../lib/content";
+
+/* One route for every `page` document. Astro hoists getStaticPaths into its own module
+   context, so everything it needs is imported at module scope rather than closed over
+   from the frontmatter below. */
+export async function getStaticPaths() {
+  const slugs = await getPageSlugs();
+
+  return slugs.map((slug) => ({
+    /* The home page is stored as "/" so it reads sensibly in the Studio; Astro wants
+       `undefined` for the index route. */
+    params: {slug: slug === "/" ? undefined : slug},
+    props: {pageSlug: slug},
+  }));
+}
+
+const {pageSlug} = Astro.props;
+const [page, settings] = await Promise.all([getPage(pageSlug), getSiteSettings()]);
+
+if (!page) {
+  throw new Error(`No page document found for slug "${pageSlug}"`);
+}
+
+const title = page.seo?.title ?? page.title;
+const description = page.seo?.description ?? settings?.defaultSeo?.description;
+---
+
+<Layout title={title} description={description} transparentHeader={page.transparentHeader !== false}>
+  <PageBuilder sections={page.pageBuilder} settings={settings} />
+</Layout>

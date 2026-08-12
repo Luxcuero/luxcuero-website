@@ -1,0 +1,586 @@
+---
+import SanityImage from "../SanityImage.astro";
+import FormField from "../FormField.astro";
+import {bandStyle} from "../../lib/bands";
+import {urlFor} from "../../lib/image";
+import {whatsappHref} from "../../lib/links";
+
+interface Props {
+  section: any;
+  settings: any;
+}
+
+const {section, settings} = Astro.props;
+const {
+  variant,
+  heading,
+  lead,
+  asideImage,
+  stepsHeading,
+  steps = [],
+  sideNote,
+  submitLabel,
+  fields = [],
+  shapeImage,
+  background,
+} = section;
+
+/* Astro style blocks are static CSS, so the asset URL reaches them through a custom
+   property set on the element. SVGs are served untransformed, hence no sizing here. */
+const shapeUrl = shapeImage?.asset ? urlFor(shapeImage).url() : null;
+
+const waHref = whatsappHref(settings?.whatsappNumber, settings?.whatsappMessage);
+---
+
+{
+  variant === "business" && (
+    <section class="sol-form" style={bandStyle(background)}>
+      {/* Its flipped twin sits at the top of the FAQ band below; together they form the
+          pinch between the two sections. */}
+      {shapeUrl && (
+        <span class="sol-shape sol-shape-bottom" style={`--shape-image: url('${shapeUrl}');`} />
+      )}
+      <div class="container">
+        <div class="sol-row">
+          <div class="sol-col-form">
+            <h1 class="rfs-40">{heading}</h1>
+            {lead && <p class="lead">{lead}</p>}
+
+            {/* No form endpoint yet — same placeholder action as the quote page. */}
+            <form class="sol-form-rows" method="post" action="#">
+              {fields.map((field: any, i: number) => (
+                <div class:list={["sol-field", field.halfWidth && "sol-field-half"]}>
+                  <FormField field={field} prefix="sol" id={`sol-field-${i}`} />
+                </div>
+              ))}
+              <div class="sol-submit">
+                {/* Odoo's primary gold (#DCA032), a shade deeper than the header CTA's. */}
+                <button
+                  type="submit"
+                  class="btn-custom"
+                  style="background-color: #dca032; color: var(--color-body); border: 1px solid #dca032;"
+                >
+                  {submitLabel}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="sol-col-img">
+            <SanityImage image={asideImage} width={900} />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+{
+  variant === "quote" && (
+    <section class="cu-info" style={bandStyle(background)}>
+      <div class="container">
+        <div class="cu-info-row">
+          <div class="cu-info-left">
+            {stepsHeading && (
+              <p class="cu-como">
+                <strong>{stepsHeading}</strong>
+              </p>
+            )}
+
+            {steps.length > 0 && (
+              <table class="cu-steps">
+                <tbody>
+                  {steps.map((step: any) => (
+                    <tr>
+                      <td class="cu-steps-icon">
+                        <p>
+                          <SanityImage image={step.icon} alt="" width={270} />
+                        </p>
+                      </td>
+                      <td>
+                        <p>
+                          <b>{step.title}</b>
+                        </p>
+                        <p>{step.description}</p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {sideNote && (
+              <div class="cu-wa">
+                <p>
+                  <strong>{sideNote.heading}</strong>
+                </p>
+                <p class="cu-wa-note">{sideNote.body}</p>
+                <p class="cu-wa-cta">
+                  <a href={waHref} target="_blank" rel="noopener noreferrer" class="cu-wa-btn">
+                    <span class="fa fa-whatsapp" aria-hidden="true" />
+                    <br />
+                    {sideNote.buttonLabel}
+                  </a>
+                </p>
+              </div>
+            )}
+            {/* Trailing spacer the source carries below the call-out. */}
+            <p>
+              <br />
+            </p>
+          </div>
+
+          <div class="cu-info-right">
+            <h2>{heading}</h2>
+
+            {/* No form endpoint yet — field names match the source's helpdesk.ticket form. */}
+            <form class="cu-form" method="post" action="#" enctype="multipart/form-data">
+              {fields.map((field: any, i: number) => (
+                <div class="cu-field">
+                  <div class="cu-field-row">
+                    <FormField
+                      field={field}
+                      prefix="cu"
+                      id={`cu-field-${i}`}
+                      datePickerLabel={settings?.ui?.datePickerLabel}
+                    />
+                  </div>
+                </div>
+              ))}
+              <div class="cu-submit">
+                <button type="submit" class="cu-send">
+                  <span>{submitLabel}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+{/* Global rather than scoped: the controls themselves are rendered by <FormField>, so
+    Astro would otherwise scope these rules to a component that no longer contains them.
+    The sol-/cu- prefixes keep the selectors from colliding with anything else. */}
+<style is:global>
+  /* ── Business form band (source: s_form_aside pt48 pb160) ─────────────── */
+  .sol-form {
+    position: relative;
+    padding-top: 48px;
+    padding-bottom: 160px;
+  }
+  .sol-form :is(h1, h2, h3, h4) {
+    color: var(--color-body);
+  }
+  .sol-form h1 {
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .sol-form .lead {
+    margin-bottom: 16px;
+  }
+  .sol-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -15px;
+  }
+  .sol-col-form,
+  .sol-col-img {
+    width: 100%;
+    padding-inline: 15px;
+  }
+  /* Stacked, the source shows the photo first and the form under it. */
+  .sol-col-img {
+    order: 0;
+  }
+  .sol-col-form {
+    order: 1;
+  }
+  @media (min-width: 992px) {
+    .sol-col-form {
+      width: 50%;
+      order: 0;
+    }
+    .sol-col-img {
+      width: 41.666667%;
+      margin-left: 8.333333%;
+      order: 0;
+    }
+  }
+  .sol-col-img :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: 6.4px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+  .sol-form-rows {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -15px;
+  }
+  .sol-field {
+    width: 100%;
+    padding-inline: 15px;
+    margin-bottom: 16px;
+  }
+  @media (min-width: 992px) {
+    .sol-field-half {
+      width: 50%;
+    }
+  }
+  .sol-label {
+    display: block;
+    width: 200px;
+    font-size: 16px;
+    line-height: 24px;
+  }
+  /* The required marker renders one step down on the source (0.85em). */
+  .sol-mark {
+    font-size: 0.85em;
+  }
+  .sol-control {
+    display: block;
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--color-body);
+    background-color: #fff;
+    border: 1px solid rgba(33, 37, 41, 0.15);
+    border-radius: 6.4px;
+    outline: none;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .sol-control:focus {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 0.2rem rgba(220, 160, 50, 0.25);
+  }
+  .sol-control::placeholder {
+    color: rgba(33, 37, 41, 0.45);
+  }
+  textarea.sol-control {
+    resize: vertical;
+  }
+  .sol-field-description {
+    margin-top: 4px;
+    font-size: 14px;
+    line-height: 21px;
+    color: rgba(33, 37, 41, 0.75);
+  }
+  .sol-submit {
+    width: 100%;
+    padding: 8px 15px;
+    text-align: right;
+  }
+  .sol-shape {
+    position: absolute;
+    inset: 0;
+    background-size: 100% 64px;
+    background-repeat: no-repeat;
+    pointer-events: none;
+  }
+  .sol-shape-bottom {
+    background-image: var(--shape-image);
+    background-position: 50% 100%;
+  }
+
+  /* ── Quote info band (source: s_website_form_info pt24 pb88 o_cc2) ────── */
+  .cu-info {
+    padding-top: 24px;
+    padding-bottom: 88px;
+  }
+  .cu-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -15px;
+  }
+  .cu-info-left,
+  .cu-info-right {
+    width: 100%;
+    padding-inline: 15px;
+  }
+  @media (min-width: 992px) {
+    .cu-info-left {
+      width: 33.333333%;
+    }
+    .cu-info-right {
+      width: 66.666667%;
+    }
+  }
+  .cu-info-right {
+    border-radius: 30px;
+  }
+  .cu-info p {
+    margin-bottom: 16px;
+  }
+  .cu-como {
+    font-size: 18px;
+    line-height: 27px;
+    color: var(--color-gold);
+    font-weight: 700;
+  }
+  .cu-info-right h2 {
+    font-size: min(40px, calc(22px + 1.5vw));
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  /* Steps table, matching the source's .table-bordered. */
+  .cu-steps {
+    width: 100%;
+    margin-bottom: 16px;
+    border-collapse: collapse;
+  }
+  .cu-steps td {
+    padding: 8px;
+    border: 1px solid rgba(33, 37, 41, 0.15);
+    vertical-align: top;
+  }
+  .cu-steps-icon {
+    width: 135px;
+  }
+  .cu-steps :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  .cu-steps b {
+    font-weight: 700;
+  }
+
+  /* WhatsApp call-out. The pill radius plus the stacked label is what rounds it into the
+     circle the source shows. Sits in eleven of twelve columns. */
+  @media (min-width: 992px) {
+    .cu-wa {
+      width: 91.666667%;
+    }
+  }
+  .cu-wa-note {
+    font-size: 14px;
+  }
+  .cu-wa-cta {
+    text-align: center;
+  }
+  .cu-wa-btn {
+    display: inline-block;
+    padding: 16px 32px;
+    font-family: var(--font-btn);
+    font-size: 20px;
+    line-height: 30px;
+    color: var(--color-body);
+    text-align: center;
+    text-decoration: none;
+    background-color: rgb(107, 165, 74);
+    border: 1px solid rgb(231, 148, 57);
+    border-radius: 160px;
+    transition: transform 0.15s ease;
+  }
+  .cu-wa-btn:hover {
+    transform: translateY(-1px);
+  }
+  .cu-wa-btn .fa {
+    font-size: 40px;
+    line-height: 40px;
+  }
+
+  /* ── Quote form ────────────────────────────────────────────────────────
+     Labels sit in a fixed 200px column beside the control from sm up, and stack above
+     it below that, as Bootstrap's col-sm-auto / col-sm do. */
+  .cu-form {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -15px;
+    padding-block: 16px;
+  }
+  .cu-field,
+  .cu-submit {
+    width: 100%;
+  }
+  .cu-field {
+    padding-inline: 15px;
+    margin-bottom: 16px;
+  }
+  .cu-field-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -15px;
+  }
+  .cu-label {
+    flex: 0 0 auto;
+    width: 200px;
+    padding: 7px 15px;
+    font-size: 16px;
+    line-height: 24px;
+  }
+  /* Group labels for the checkbox sets carry no vertical padding on the source. */
+  .cu-label-plain {
+    display: block;
+    padding-block: 0;
+  }
+  .cu-mark {
+    font-size: 0.85em;
+  }
+  .cu-input-col {
+    flex: 1 0 0%;
+    min-width: 0;
+    padding-inline: 15px;
+  }
+  /* Below sm the control drops onto its own line, but the label keeps its content
+     width rather than stretching. */
+  @media (max-width: 575.98px) {
+    .cu-label {
+      width: auto;
+    }
+    .cu-input-col {
+      flex: 0 0 100%;
+    }
+  }
+  .cu-control {
+    display: block;
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--color-body);
+    background-color: #fff;
+    border: 1px solid rgba(33, 37, 41, 0.15);
+    border-radius: 6.4px;
+    outline: none;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .cu-control:focus {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 0.2rem rgba(224, 185, 109, 0.25);
+  }
+  .cu-control::placeholder {
+    color: rgba(33, 37, 41, 0.45);
+  }
+  textarea.cu-control {
+    resize: vertical;
+  }
+
+  /* Input group: the control and its icon button share one rounded outline. */
+  .cu-date {
+    display: flex;
+    width: 100%;
+  }
+  .cu-date .cu-control {
+    border-radius: 6.4px 0 0 6.4px;
+    border-right: 0;
+  }
+  .cu-date .cu-control::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+  .cu-date-icon {
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--color-body);
+    background-color: #e9e9ea;
+    border: 1px solid rgba(33, 37, 41, 0.15);
+    border-radius: 0 6.4px 6.4px 0;
+    cursor: pointer;
+  }
+
+  .cu-checks {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -15px;
+  }
+  .cu-check-col {
+    width: 100%;
+    padding-inline: 15px;
+  }
+  @media (min-width: 768px) {
+    .cu-checks-inline .cu-check-col {
+      width: 50%;
+    }
+  }
+  @media (min-width: 992px) {
+    .cu-checks-inline .cu-check-col {
+      width: 33.333333%;
+    }
+  }
+  .cu-check-col-full {
+    width: 100%;
+  }
+  .cu-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 26px;
+  }
+  /* Bootstrap draws its own box rather than using the native control. */
+  .cu-check-input {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #fff;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    border: 1px solid rgba(33, 37, 41, 0.15);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .cu-check-input:checked {
+    background-color: var(--color-gold);
+    border-color: var(--color-gold);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+  }
+  .cu-check-input:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+  .cu-check-label {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .cu-submit {
+    padding: 8px 15px;
+    text-align: center;
+  }
+  .cu-send {
+    display: inline-block;
+    padding: 16px 32px;
+    font-family: var(--font-btn);
+    font-size: 20px;
+    line-height: 30px;
+    color: var(--color-cream);
+    background-color: var(--color-gold);
+    border: 1px solid var(--color-gold);
+    border-radius: 160px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .cu-send:hover {
+    transform: translateY(-1px);
+  }
+  /* The source sets the label one size band above the button itself. */
+  .cu-send span {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+</style>
+
+<script>
+  document.querySelectorAll("[data-date-for]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const input = document.getElementById(button.getAttribute("data-date-for") ?? "");
+      if (!(input instanceof HTMLInputElement)) return;
+      /* showPicker isn't in every browser; focusing is a reasonable fallback. */
+      if (typeof input.showPicker === "function") input.showPicker();
+      else input.focus();
+    });
+  });
+</script>

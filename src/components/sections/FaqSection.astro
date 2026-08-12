@@ -1,0 +1,173 @@
+---
+import {bandStyle} from "../../lib/bands";
+import {urlFor} from "../../lib/image";
+
+interface Props {
+  section: any;
+}
+
+const {section} = Astro.props;
+const {heading, lead, items = [], layout = "accordion", shapeImage, background} = section;
+
+const shapeUrl = shapeImage?.asset ? urlFor(shapeImage).url() : null;
+---
+
+{
+  layout === "accordion" && (
+    <section class="py-16" style={bandStyle(background)}>
+      <div class="container">
+        <h2 class="text-center text-5xl md:text-6xl mb-10">{heading}</h2>
+        <div class="faq-accordion divide-y" style="border-color: rgba(0,0,0,0.08);">
+          {items.map((item: any, i: number) => (
+            <div class="faq-item border-t first:border-t-0" style="border-color: rgba(0,0,0,0.08);">
+              <button
+                type="button"
+                class="faq-trigger w-full flex items-center justify-between gap-4 py-5 text-left font-bold"
+                aria-expanded="false"
+                aria-controls={`faq-panel-${i}`}
+              >
+                <span>{item.question}</span>
+                <svg
+                  class="faq-icon shrink-0 transition-transform duration-200"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div
+                id={`faq-panel-${i}`}
+                class="faq-panel grid grid-rows-[0fr] transition-[grid-template-rows] duration-200"
+              >
+                <div class="overflow-hidden">
+                  <p class="pb-5 text-black/70 leading-relaxed">{item.answer}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+{
+  layout === "list" && (
+    <section class="sol-faq" style={bandStyle(background)}>
+      {shapeUrl && (
+        <span class="sol-shape sol-shape-top" style={`--shape-image: url('${shapeUrl}');`} />
+      )}
+      <div class="container">
+        <div class="sol-row">
+          <div class="sol-faq-intro">
+            <h2 class="rfs-32">
+              <strong>{heading}</strong>
+            </h2>
+            {lead && <p class="lead">{lead}</p>}
+          </div>
+          {items.map((item: any) => (
+            <div class="sol-faq-item">
+              <h3 class="sol-faq-q">
+                <strong>{item.question}</strong>
+              </h3>
+              <p class="sol-faq-a">{item.answer}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* ── FAQ band (source: s_faq_list pt120 pb56) ─────────────────────────── */
+  .sol-faq {
+    position: relative;
+    padding-top: 120px;
+    padding-bottom: 56px;
+  }
+  .sol-faq :is(h1, h2, h3, h4) {
+    color: var(--color-body);
+  }
+  .sol-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -15px;
+  }
+  .sol-faq-intro {
+    width: 100%;
+    padding-inline: 15px;
+    padding-bottom: 24px;
+  }
+  .sol-faq-intro h2 {
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .sol-faq .lead {
+    margin-bottom: 16px;
+  }
+  .sol-faq-item {
+    width: 100%;
+    padding: 16px 15px;
+  }
+  @media (min-width: 992px) {
+    .sol-faq-item {
+      width: 33.333333%;
+    }
+  }
+  /* The source nests an h4-size span inside an h6-size heading; the span wins. */
+  .sol-faq-q {
+    font-size: min(24px, calc(20.4px + 0.3vw));
+    line-height: 1.2;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .sol-faq-a {
+    font-size: 20px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  /* The flipped twin of the shape on the form band above; together they form the pinch
+     between the two sections. */
+  .sol-shape {
+    position: absolute;
+    inset: 0;
+    background-size: 100% 64px;
+    background-repeat: no-repeat;
+    pointer-events: none;
+  }
+  .sol-shape-top {
+    background-image: var(--shape-image);
+    background-position: 50% 0%;
+  }
+</style>
+
+<script>
+  function initAccordion() {
+    document
+      .querySelectorAll<HTMLButtonElement>(".faq-trigger:not([data-bound])")
+      .forEach((btn) => {
+        btn.dataset.bound = "true";
+        btn.addEventListener("click", () => {
+          const panel = btn.parentElement?.querySelector<HTMLElement>(".faq-panel");
+          const icon = btn.querySelector<HTMLElement>(".faq-icon");
+          const expanded = btn.getAttribute("aria-expanded") === "true";
+          btn.setAttribute("aria-expanded", String(!expanded));
+          panel?.classList.toggle("grid-rows-[1fr]", !expanded);
+          panel?.classList.toggle("grid-rows-[0fr]", expanded);
+          icon?.classList.toggle("rotate-180", !expanded);
+        });
+      });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAccordion);
+  } else {
+    initAccordion();
+  }
+  document.addEventListener("astro:page-load", initAccordion);
+</script>

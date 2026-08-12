@@ -1,0 +1,195 @@
+---
+import SanityImage from "./SanityImage.astro";
+import {hrefFor, linkAttrs} from "../lib/links";
+
+interface Props {
+  transparent?: boolean;
+  settings: any;
+}
+
+const {transparent = true, settings} = Astro.props;
+
+const navLinks = settings?.navLinks ?? [];
+const headerCta = settings?.headerCta;
+const currentPath = Astro.url.pathname;
+
+/* The active link is matched on the resolved href so it keeps working when a slug
+   changes in the Studio. */
+const isActive = (href: string) =>
+  href === "/" ? currentPath === "/" : currentPath.startsWith(href);
+---
+
+<header
+  id="site-header"
+  class="fixed inset-x-0 top-0 z-50 transition-colors duration-300 header-slide"
+  data-solid={transparent ? "false" : "true"}
+  data-transparent={transparent ? "true" : "false"}
+>
+  <nav class="container flex h-24 items-center">
+    <a href="/" class="flex items-center shrink-0 pl-4 md:pl-8">
+      <SanityImage
+        image={settings?.logo}
+        alt={settings?.siteName ?? "Luxcuero"}
+        width={220}
+        loading="eager"
+        class="h-20 w-auto"
+      />
+    </a>
+
+    <ul class="hidden lg:flex items-center gap-8 ml-10">
+      {
+        navLinks.map((link: any) => {
+          const href = hrefFor(link.link);
+          return (
+            <li>
+              <a
+                href={href}
+                {...linkAttrs(link.link)}
+                class:list={[
+                  "header-link text-base tracking-wide transition-colors",
+                  isActive(href)
+                    ? "font-bold header-link-active"
+                    : "font-normal header-link-inactive",
+                ]}
+              >
+                {link.label}
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    {
+      headerCta && (
+        <a
+          href={hrefFor(headerCta.link)}
+          {...linkAttrs(headerCta.link)}
+          class="btn-custom hidden lg:inline-flex ml-auto mr-4 md:mr-8"
+          style="background-color: var(--color-gold); color: var(--color-ink); border: 1px solid rgba(0,0,0,0.05);"
+        >
+          {headerCta.label}
+        </a>
+      )
+    }
+
+    <button
+      id="mobile-menu-toggle"
+      class="lg:hidden p-2 header-link ml-auto mr-2"
+      aria-label={settings?.ui?.menuToggle}
+      aria-controls="mobile-menu"
+      aria-expanded="false"
+    >
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+  </nav>
+
+  <div id="mobile-menu" class="lg:hidden hidden bg-[var(--color-ink)] text-white">
+    <ul class="flex flex-col divide-y divide-white/10">
+      {
+        navLinks.map((link: any) => (
+          <li>
+            <a
+              href={hrefFor(link.link)}
+              {...linkAttrs(link.link)}
+              class="block px-6 py-3 text-sm uppercase tracking-wide"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    {
+      headerCta && (
+        <div class="px-6 pb-6 pt-2">
+          <a
+            href={hrefFor(headerCta.link)}
+            {...linkAttrs(headerCta.link)}
+            class="btn-custom w-full text-sm"
+            style="background-color: var(--color-gold); color: var(--color-ink);"
+          >
+            {headerCta.label}
+          </a>
+        </div>
+      )
+    }
+  </div>
+</header>
+
+<style>
+  #site-header {
+    background-color: transparent;
+  }
+  .header-slide {
+    transform: translateY(0);
+    transition:
+      transform 0.3s ease,
+      background-color 0.3s ease;
+  }
+  .header-slide[data-hidden="true"] {
+    transform: translateY(-100%);
+  }
+  #site-header .header-link {
+    color: #fff;
+  }
+  #site-header .header-link-inactive {
+    color: var(--color-gold);
+  }
+  #site-header[data-solid="true"] {
+    background-color: var(--color-ink);
+  }
+  .header-link:hover {
+    color: var(--color-gold) !important;
+  }
+</style>
+
+<script>
+  const header = document.getElementById("site-header");
+  const toggle = document.getElementById("mobile-menu-toggle");
+  const menu = document.getElementById("mobile-menu");
+
+  const getHideThreshold = () => {
+    const hero = document.getElementById("hero") || document.querySelector("main section");
+    if (hero instanceof HTMLElement && hero.offsetHeight > 0) return hero.offsetHeight / 2;
+    return window.innerHeight / 2;
+  };
+
+  let lastScrollY = window.scrollY;
+
+  const onScroll = () => {
+    if (!header) return;
+    const scrollY = window.scrollY;
+
+    if (header.dataset.transparent === "true") {
+      header.dataset.solid = scrollY > 40 ? "true" : "false";
+    }
+
+    const threshold = getHideThreshold();
+    const menuOpen = !menu?.classList.contains("hidden");
+    if (scrollY <= threshold || menuOpen) {
+      header.dataset.hidden = "false";
+    } else if (scrollY > lastScrollY) {
+      header.dataset.hidden = "true";
+    } else if (scrollY < lastScrollY) {
+      header.dataset.hidden = "false";
+    }
+
+    lastScrollY = scrollY <= 0 ? 0 : scrollY;
+  };
+  onScroll();
+  window.addEventListener("scroll", onScroll, {passive: true});
+
+  toggle?.addEventListener("click", () => {
+    const isOpen = menu?.classList.toggle("hidden") === false;
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    if (isOpen && header) {
+      header.dataset.solid = "true";
+      header.dataset.hidden = "false";
+    }
+  });
+</script>

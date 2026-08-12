@@ -1,0 +1,100 @@
+---
+import PortableTextBody from "../PortableTextBody.astro";
+import {bandStyle} from "../../lib/bands";
+
+interface Props {
+  section: any;
+}
+
+const {section} = Astro.props;
+const {heading, headingStyle = "standard", content, background} = section;
+---
+
+<section class="legal-band" style={bandStyle(background)}>
+  <div class="container">
+    <div class="legal-row">
+      <div class="legal-col">
+        {/* An h1 either way: this is the page's only top-level heading. The source
+            rendered privacy's as an h3, which left that page without one at all. */}
+        {heading && <h1 class:list={["legal-heading", `is-${headingStyle}`]}>{heading}</h1>}
+        <PortableTextBody value={content} />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  /* pt56/pb56 on the source. The extra 96px clears our fixed header, which the source
+     doesn't need because its header is static — keeping it as padding means the band
+     colour runs behind the bar instead of leaving a white strip when the header hides. */
+  .legal-band {
+    padding-top: 152px;
+    padding-bottom: 56px;
+  }
+  /* Bootstrap row/col-lg-10: the copy occupies ten of twelve columns from lg up. */
+  .legal-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    margin-inline: -15px;
+  }
+  .legal-col {
+    width: 100%;
+    padding-inline: 15px;
+    padding-top: 16px;
+  }
+  @media (min-width: 992px) {
+    .legal-col {
+      width: 83.333333%;
+    }
+  }
+
+  .legal-col :is(h2, h3) {
+    font-size: min(32px, calc(21.2px + 0.9vw));
+    line-height: 1.2;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+  .legal-heading {
+    line-height: 1.2;
+    font-weight: 400;
+    color: var(--color-body);
+    margin-bottom: 8px;
+  }
+  .legal-heading.is-standard {
+    font-size: min(32px, calc(21.2px + 0.9vw));
+  }
+  /* Bootstrap .display-4 — the size the source gives the terms title. */
+  .legal-heading.is-display {
+    font-size: min(56px, calc(23.6px + 2.7vw));
+  }
+  .legal-col p {
+    font-size: 16px;
+    line-height: 24px;
+    margin-bottom: 16px;
+  }
+  .legal-col :is(b, strong) {
+    font-weight: 700;
+  }
+  .legal-col ul {
+    list-style: disc;
+    padding-left: 32px;
+    margin-bottom: 16px;
+  }
+  .legal-col ol {
+    list-style: decimal;
+    padding-left: 32px;
+    margin-bottom: 16px;
+  }
+  .legal-col li {
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .legal-col a {
+    color: #ff9c00;
+    text-decoration: none;
+  }
+  .legal-col a:hover {
+    text-decoration: underline;
+  }
+</style>

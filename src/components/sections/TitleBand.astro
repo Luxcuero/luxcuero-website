@@ -1,0 +1,50 @@
+---
+interface Props {
+  section: any;
+}
+
+const {section} = Astro.props;
+const {heading, subheadings = [], accent = "gold"} = section;
+---
+
+<section class="sol-title" data-accent={accent}>
+  <div class="container">
+    <h2><span class="rfs-64">{heading}</span></h2>
+    {subheadings?.map((line: string) => <h4>{line}&nbsp;</h4>)}
+  </div>
+</section>
+
+<style>
+  /* pt136 on the source; the extra 96px clears our fixed header, and keeping it as
+     padding means the colour runs behind the bar rather than starting under it. */
+  .sol-title {
+    padding-top: 232px;
+    padding-bottom: 128px;
+  }
+  .sol-title[data-accent="gold"] {
+    background-color: #dca032;
+  }
+  .sol-title[data-accent="ink"] {
+    background-color: var(--color-ink);
+  }
+  /* o_cc3 puts body-grey rather than the site's near-black on its headings. */
+  .sol-title :is(h1, h2, h3, h4, h5, h6) {
+    color: var(--color-body);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .sol-title[data-accent="ink"] :is(h1, h2, h3, h4, h5, h6) {
+    color: #fff;
+  }
+  .sol-title h2 {
+    font-size: min(40px, calc(22px + 1.5vw));
+    line-height: 1.2;
+  }
+  .sol-title h2 span {
+    line-height: 1.2;
+  }
+  .sol-title h4 {
+    font-size: min(24px, calc(20.4px + 0.3vw));
+    line-height: 1.2;
+  }
+</style>

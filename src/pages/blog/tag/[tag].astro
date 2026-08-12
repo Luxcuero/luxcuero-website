@@ -1,0 +1,39 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import BlogIndexLayout from "../../../components/BlogIndexLayout.astro";
+import {getPostsByTag, getSiteSettings} from "../../../lib/content";
+import {sanityClient} from "../../../lib/sanity";
+
+/* Only tags that actually carry a post get a route, matching the old behaviour of
+   deriving tag pages from the posts themselves. */
+export async function getStaticPaths() {
+  const tags = await sanityClient.fetch<{slug: string}[]>(
+    `*[_type == "tag" && count(*[_type == "post" && references(^._id)]) > 0]{"slug": slug.current}`,
+  );
+
+  return tags.map((tag) => ({params: {tag: tag.slug}}));
+}
+
+const {tag} = Astro.params;
+const [result, settings] = await Promise.all([getPostsByTag(tag!), getSiteSettings()]);
+
+const blog = settings?.blog ?? {};
+const posts = result?.posts ?? [];
+const label = result?.label ?? tag;
+const count = posts.length;
+
+const countWord = count === 1 ? blog.countSingular : blog.countPlural;
+const description = (blog.tagDescription ?? "").replace("{tag}", label);
+---
+
+<Layout
+  title={`${label} | ${blog.heading} — ${blog.titleSuffix}`}
+  description={description}
+>
+  <BlogIndexLayout
+    heading={label}
+    tagline={`${count} ${countWord} en ${blog.heading}`}
+    posts={posts}
+    settings={settings}
+  />
+</Layout>

@@ -1,0 +1,27 @@
+---
+import SanityImage from "../SanityImage.astro";
+import {bandStyle} from "../../lib/bands";
+
+interface Props {
+  section: any;
+}
+
+const {section} = Astro.props;
+---
+
+<section class="py-16" style={bandStyle(section.background)}>
+  <div class="container">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      {
+        section.items?.map((item: any) => (
+          <div class="text-center pt-4 pb-2">
+            <SanityImage image={item.icon} alt="" width={200} class="mx-auto block w-[33%] mb-3" />
+            <p class="font-bold" style="color: var(--color-gold);">
+              {item.label}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

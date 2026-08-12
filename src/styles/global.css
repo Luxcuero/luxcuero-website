@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette, extracted from luxcuero.com's compiled theme (nano-1) */
+  --color-gold: #E0B96D;
+  --color-cream: #EFE9E0;
+  --color-ink: #0D0D0D;
+  --color-white: #FFFFFF;
+  /* Body copy on the source site is Bootstrap's default #212529, not the near-black
+     --color-ink, which is reserved for dark section backgrounds. */
+  --color-body: #212529;
+
+  --font-heading: "Playfair Display", "Georgia", serif;
+  --font-body: "Montserrat", "Segoe UI", sans-serif;
+  --font-btn: "Manrope", "Segoe UI", sans-serif;
+
+  --breakpoint-lg: 992px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-body);
+  background-color: var(--color-white);
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    line-height: 1.2;
+    /* Headings use the near-black ink colour, distinct from the #212529 body copy. */
+    color: var(--color-ink);
+  }
+
+  /* Setting a colour on the headings themselves blocks inheritance, so headings inside
+     light-on-dark blocks must opt back into the inherited colour. */
+  .text-white :is(h1, h2, h3, h4, h5, h6) {
+    color: inherit;
+  }
+
+  /* Default heading sizes, RFS-scaled to match the source site's Bootstrap theme. */
+  h1 { font-size: min(80px, calc(26px + 4.5vw)); }
+  h2 { font-size: min(40px, calc(22px + 1.5vw)); }
+  h3 { font-size: min(32px, calc(21.2px + 0.9vw)); }
+  h4 { font-size: min(24px, calc(20.4px + 0.3vw)); }
+  h5 { font-size: 20px; }
+  h6 { font-size: 16px; }
+}
+
+/* Responsive Font Sizing — replicates Bootstrap 5's RFS, which the source site uses.
+   Sizes glide linearly with viewport width and lock at the 1200px breakpoint, rather
+   than stepping at breakpoints. Derived from the live site's computed values:
+     min   = 20px + (target - 20px) / 10
+     slope = (target - min) / 12   (as vw)
+   Sizes at or below 20px are not scaled by RFS, so they stay fixed. */
+.rfs-100 { font-size: min(100px, calc(28px + 6vw)); }
+.rfs-80 { font-size: min(80px, calc(26px + 4.5vw)); }
+.rfs-72 { font-size: min(72px, calc(25.2px + 3.9vw)); }
+.rfs-64 { font-size: min(64px, calc(24.4px + 3.3vw)); }
+.rfs-56 { font-size: min(56px, calc(23.6px + 2.7vw)); }
+.rfs-50 { font-size: min(50px, calc(23px + 2.25vw)); }
+.rfs-40 { font-size: min(40px, calc(22px + 1.5vw)); }
+.rfs-32 { font-size: min(32px, calc(21.2px + 0.9vw)); }
+.rfs-24 { font-size: min(24px, calc(20.4px + 0.3vw)); }
+.rfs-22 { font-size: min(22px, calc(20.2px + 0.15vw)); }
+
+/* Bootstrap's .lead, matched to the source site (18px / 1.5 / weight 300). */
+.lead {
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 300;
+}
+
+/* Matches the source site's .btn-custom: 8px/16px padding, regular weight, pill radius.
+   Individual buttons bold their own label where the source wraps it in <strong>. */
+.btn-custom {
+  font-family: var(--font-btn);
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 8px 16px;
+  border-radius: 160px;
+  text-decoration: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-custom:hover {
+  transform: translateY(-1px);
+}
+
+/* Bootstrap 5 default container breakpoints, matched so layout widths line up with the source site */
+.container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 15px;
+}
+@media (min-width: 576px) { .container { max-width: 540px; } }
+@media (min-width: 768px) { .container { max-width: 720px; } }
+@media (min-width: 992px) { .container { max-width: 960px; } }
+@media (min-width: 1200px) { .container { max-width: 1140px; } }
+@media (min-width: 1400px) { .container { max-width: 1320px; } }

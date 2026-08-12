@@ -1,0 +1,51 @@
+---
+import HeroSection from "./sections/HeroSection.astro";
+import TitleBand from "./sections/TitleBand.astro";
+import TrustBar from "./sections/TrustBar.astro";
+import ServiceCardGrid from "./sections/ServiceCardGrid.astro";
+import BeforeAfterGallery from "./sections/BeforeAfterGallery.astro";
+import StepList from "./sections/StepList.astro";
+import FeatureGrid from "./sections/FeatureGrid.astro";
+import FaqSection from "./sections/FaqSection.astro";
+import CtaBand from "./sections/CtaBand.astro";
+import ContactFormSection from "./sections/ContactFormSection.astro";
+import RichTextSection from "./sections/RichTextSection.astro";
+
+interface Props {
+  sections?: any[] | null;
+  settings: any;
+}
+
+const {sections, settings} = Astro.props;
+
+/* Maps a section's `_type` to the component that renders it. Adding a section type means
+   adding it here and to page.pageBuilder in the schema — a type with no entry is skipped
+   rather than crashing the build, so a schema change deployed ahead of the frontend
+   degrades to a missing band instead of a broken site. */
+const COMPONENTS: Record<string, any> = {
+  heroSection: HeroSection,
+  titleBand: TitleBand,
+  trustBar: TrustBar,
+  serviceCardGrid: ServiceCardGrid,
+  beforeAfterGallery: BeforeAfterGallery,
+  stepList: StepList,
+  featureGrid: FeatureGrid,
+  faqSection: FaqSection,
+  ctaBand: CtaBand,
+  contactFormSection: ContactFormSection,
+  richTextSection: RichTextSection,
+};
+
+const known = (sections ?? []).filter((section) => {
+  if (COMPONENTS[section._type]) return true;
+  console.warn(`[PageBuilder] no component for section type "${section._type}" — skipped`);
+  return false;
+});
+---
+
+{
+  known.map((section) => {
+    const Component = COMPONENTS[section._type];
+    return <Component section={section} settings={settings} />;
+  })
+}

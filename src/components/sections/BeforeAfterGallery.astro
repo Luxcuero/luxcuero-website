@@ -1,0 +1,298 @@
+---
+import {bandStyle} from "../../lib/bands";
+import SanityImage from "../SanityImage.astro";
+import {urlFor} from "../../lib/image";
+
+interface Props {
+  section: any;
+  settings: any;
+}
+
+const {section, settings} = Astro.props;
+
+const beforeLabel = settings?.ui?.beforeLabel;
+const afterLabel = settings?.ui?.afterLabel;
+const sliderLogo = settings?.sliderLogo;
+const {eyebrow, heading, tagline, items = [], columns = 4, anchorId, background} = section;
+
+/* The slider crops each pair to a fixed 16:9 box, so both halves are requested at the
+   same dimensions — otherwise the two images drift apart as the handle moves. */
+const pairs = items.map((item: any) => ({
+  key: item._key,
+  caption: item.caption,
+  before: urlFor(item.before).width(1280).height(720).fit("crop").auto("format").url(),
+  after: urlFor(item.after).width(1280).height(720).fit("crop").auto("format").url(),
+}));
+
+/* The home page runs these four across under a centred heading; the service pages use two
+   across under an eyebrow. Both share the slider itself. */
+const isWide = columns === 4;
+---
+
+<section id={anchorId} class={isWide ? "py-12" : "pt-10 pb-0"} style={bandStyle(background)}>
+  <div class="container text-center mb-10">
+    {eyebrow && <p class="font-bold mb-2" style="color: var(--color-gold);">{eyebrow}</p>}
+    {
+      isWide ? (
+        <h2 class="text-3xl md:text-4xl mb-3" style="color: var(--color-gold);">
+          <strong>{heading}</strong>
+        </h2>
+      ) : (
+        <h2 class="rfs-40 text-white">{heading}</h2>
+      )
+    }
+    {tagline && <p class="italic text-white/60">{tagline}</p>}
+  </div>
+
+  <div class:list={["container", isWide ? "px-8 md:px-16 lg:px-24" : "pt-4 pb-6"]}>
+    <div class="slider-gallery" style={`--gallery-cols: ${columns};`}>
+      {
+        pairs.map((pair: any) => (
+          <div class="before-after-container">
+            <img
+              src={pair.after}
+              alt={pair.caption ? `${pair.caption} - ${afterLabel}` : afterLabel}
+              class="image-after"
+              loading="lazy"
+            />
+            <div class="image-before-wrapper">
+              <img
+                src={pair.before}
+                alt={pair.caption ? `${pair.caption} - ${beforeLabel}` : beforeLabel}
+                class="image-before"
+                loading="lazy"
+              />
+            </div>
+            <div class="slider-handle">
+              <div class="slider-line" />
+              <div class="slider-button">
+                <svg
+                  class="slider-arrow left"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                <SanityImage image={sliderLogo} width={108} class="slider-logo" />
+                <svg
+                  class="slider-arrow right"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </div>
+              <div class="slider-line" />
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .slider-gallery {
+    display: grid;
+    grid-template-columns: repeat(var(--gallery-cols, 4), 1fr);
+    gap: 20px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  @media (max-width: 1024px) {
+    .slider-gallery {
+      grid-template-columns: repeat(min(var(--gallery-cols, 4), 2), 1fr);
+    }
+  }
+  @media (max-width: 768px) {
+    .slider-gallery {
+      grid-template-columns: 1fr;
+    }
+  }
+  .before-after-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 300px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    user-select: none;
+  }
+  .before-after-container img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+  .image-before-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .image-before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-width: 100%;
+    height: 100%;
+    /* Tailwind's Preflight applies `max-width: 100%` to every img, which would clamp
+       this image to the shrinking wrapper and scale it instead of clipping it. The
+       JS pins an explicit pixel width, so the cap has to be lifted. */
+    max-width: none;
+  }
+  .slider-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%);
+    cursor: ew-resize;
+    touch-action: none;
+  }
+  .slider-line {
+    flex-grow: 1;
+    width: 3px;
+    background-color: #ffffff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  }
+  .slider-button {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    transition: transform 0.1s ease;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  .slider-handle:active .slider-button {
+    transform: scale(1.08);
+  }
+  /* Rendered by <SanityImage>, so it sits outside this component's style scope. */
+  :global(.slider-logo) {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffffff;
+    animation: sliderBlink 1.5s infinite;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    pointer-events: none;
+  }
+  .slider-arrow.left {
+    left: -28px;
+  }
+  .slider-arrow.right {
+    right: -28px;
+  }
+  @keyframes sliderBlink {
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  function initSliders() {
+    const sliders = document.querySelectorAll<HTMLElement>(
+      ".before-after-container:not(.initialized)",
+    );
+
+    sliders.forEach((container) => {
+      container.classList.add("initialized");
+
+      const beforeWrapper = container.querySelector<HTMLElement>(".image-before-wrapper");
+      const beforeImage = container.querySelector<HTMLElement>(".image-before");
+      const handle = container.querySelector<HTMLElement>(".slider-handle");
+      if (!beforeWrapper || !beforeImage || !handle) return;
+
+      let isDragging = false;
+
+      /* The clipped image must stay the full width of the container so that narrowing
+         the wrapper reveals/hides it rather than scaling it. */
+      function updateImageWidth() {
+        const containerWidth = container.clientWidth;
+        if (containerWidth > 0) {
+          beforeImage.style.width = containerWidth + "px";
+        }
+      }
+
+      function moveSlider(xPos: number) {
+        const rect = container.getBoundingClientRect();
+        if (!rect.width) return;
+        const positionX = Math.min(Math.max(xPos - rect.left, 0), rect.width);
+        const percentage = (positionX / rect.width) * 100;
+        beforeWrapper.style.width = percentage + "%";
+        handle.style.left = percentage + "%";
+      }
+
+      const stopDragging = () => {
+        isDragging = false;
+      };
+
+      handle.addEventListener("pointerdown", (e) => {
+        isDragging = true;
+        handle.setPointerCapture(e.pointerId);
+        moveSlider(e.clientX);
+        e.preventDefault();
+      });
+      handle.addEventListener("pointermove", (e) => {
+        if (isDragging) moveSlider(e.clientX);
+      });
+      handle.addEventListener("pointerup", stopDragging);
+      handle.addEventListener("pointercancel", stopDragging);
+      window.addEventListener("pointerup", stopDragging);
+
+      window.addEventListener("resize", updateImageWidth);
+
+      const resizeObserver = new ResizeObserver(() => updateImageWidth());
+      resizeObserver.observe(container);
+
+      updateImageWidth();
+      setTimeout(updateImageWidth, 200);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSliders);
+  } else {
+    initSliders();
+  }
+  document.addEventListener("astro:page-load", initSliders);
+</script>
