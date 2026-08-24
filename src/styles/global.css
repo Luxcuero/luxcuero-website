@@ -14,6 +14,10 @@
   --font-body: "Montserrat", "Segoe UI", sans-serif;
   --font-btn: "Manrope", "Segoe UI", sans-serif;
 
+  /* lg is remapped to Bootstrap's 992px. md is re-declared alongside it so Tailwind
+     registers the two in ascending order — otherwise the custom lg sorts ahead of the
+     stock md and `md:` wins over `lg:` at every width above 768px. */
+  --breakpoint-md: 768px;
   --breakpoint-lg: 992px;
 }
 
