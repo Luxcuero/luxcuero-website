@@ -23,7 +23,16 @@ const tileOffset = cards.length === 5;
         <div class="grid md:grid-cols-3 gap-8">
           {cards.map((card: any) => (
             <div class="rounded-2xl p-8 h-full flex flex-col" style="background-color: #141414;">
-              <a href={hrefFor(card.link)} {...linkAttrs(card.link)} class="block mb-6">
+              {/* The image is decorative -- the card's title sits right below it -- so the
+                  alt stays empty and the link takes its name from the title instead.
+                  Without this the link is announced as just "link" and has no keyboard
+                  affordance beyond the URL. */}
+              <a
+                href={hrefFor(card.link)}
+                {...linkAttrs(card.link)}
+                aria-label={card.title}
+                class="block mb-6"
+              >
                 <SanityImage
                   image={card.image}
                   alt=""
