@@ -37,7 +37,7 @@ const subLines: string[] = subheadline ? String(subheadline).split("\n") : [];
   variant === "home" && (
     <section
       id="hero"
-      class="relative flex items-center min-h-[100dvh] pt-32 pb-0 overflow-hidden"
+      class="relative flex items-center min-h-[clamp(680px,70vh,820px)] pt-32 pb-0 md:pb-20 overflow-hidden"
     >
       <SanityImage
         image={backgroundImage}
@@ -58,7 +58,7 @@ const subLines: string[] = subheadline ? String(subheadline).split("\n") : [];
               </span>
             </h2>
           )}
-          <h1 class="text-[50px] font-normal mb-2 whitespace-normal lg:whitespace-nowrap">
+          <h1 class="text-[34px] md:text-[42px] lg:text-[50px] font-normal mb-2 whitespace-normal lg:whitespace-nowrap">
             {headline}
           </h1>
           {subheadline && (
@@ -70,7 +70,7 @@ const subLines: string[] = subheadline ? String(subheadline).split("\n") : [];
             </h2>
           )}
           {body && (
-            <p class="italic text-xl text-white/90 mb-8 leading-relaxed max-w-3xl">{body}</p>
+            <p class="italic text-base md:text-lg lg:text-xl text-white/90 mb-8 leading-relaxed max-w-3xl">{body}</p>
           )}
           <CtaList ctas={ctas} />
         </div>
@@ -156,9 +156,12 @@ const subLines: string[] = subheadline ? String(subheadline).split("\n") : [];
                 <b>{eyebrow}</b>
               </p>
             )}
-            <h2 class="cu-h2">
+            {/* The page's only top-level heading. It keeps the .cu-h2 class so it still
+                draws at the banner's 32px, but the tag has to be <h1> — /contactus is the
+                one page built on this variant and it was shipping without an h1 at all. */}
+            <h1 class="cu-h2">
               <b>{headline}&nbsp;</b>
-            </h2>
+            </h1>
             {subheadline && (
               <h2 class="cu-h2">
                 <b>
