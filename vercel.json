@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/blog/cuida-tu-cuero-1/tendencia-arenales-2026-diseno-experiencia-y-una-nueva-forma-de-cuidar-tus-muebles-5",
+      "destination": "/blog/tendencia-arenales-2026",
+      "permanent": true
+    },
+    {
+      "source": "/blog/cuida-tu-cuero-1/deberia-repintar-yo-el-cuero-de-mi-auto-3",
+      "destination": "/blog/deberia-repintar-yo-el-cuero-de-mi-auto",
+      "permanent": true
+    },
+    {
+      "source": "/blog/cuida-tu-cuero-1/:path*",
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/helpdesk/:path*",
+      "destination": "/contactus",
+      "permanent": true
+    }
+  ]
+}
