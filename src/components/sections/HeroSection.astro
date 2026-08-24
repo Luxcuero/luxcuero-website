@@ -81,7 +81,7 @@ const subLines: string[] = subheadline ? String(subheadline).split("\n") : [];
 
 {
   variant === "page" && (
-    <section class="relative flex items-center pt-[88px] pb-24 min-h-screen overflow-hidden">
+    <section class="relative flex items-center pt-[88px] pb-12 md:pb-24 min-h-[clamp(680px,70vh,820px)] overflow-hidden">
       {/* Scaled up slightly so the blur's soft edges are cropped by the section instead
           of showing as a faded border. */}
       <SanityImage
@@ -103,11 +103,11 @@ const subLines: string[] = subheadline ? String(subheadline).split("\n") : [];
               <span class="text-[18px] font-bold">{eyebrow}</span>
             </h2>
           )}
-          <h1 class="text-[50px] font-normal mb-2">{headline}</h1>
+          <h1 class="text-[34px] md:text-[42px] lg:text-[50px] font-normal mb-2">{headline}</h1>
           {subLines.map((line, i) => (
             <h2
               class:list={[
-                "text-[50px] italic font-bold",
+                "text-[34px] md:text-[42px] lg:text-[50px] italic font-bold",
                 i === subLines.length - 1 ? "mb-8" : "mb-2",
               ]}
               style="color: var(--color-gold);"
@@ -116,7 +116,7 @@ const subLines: string[] = subheadline ? String(subheadline).split("\n") : [];
             </h2>
           ))}
           {body && (
-            <p class="text-[18px] font-light text-white leading-[1.5] mb-6">{body}</p>
+            <p class="text-[16px] md:text-[18px] font-light text-white leading-[1.5] mb-6">{body}</p>
           )}
           {checklist && checklist.length > 0 && (
             <ul class="mb-8">
