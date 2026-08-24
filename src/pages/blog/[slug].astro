@@ -5,6 +5,7 @@ import SanityImage from "../../components/SanityImage.astro";
 import {getPost, getSiteSettings} from "../../lib/content";
 import {dateLong} from "../../lib/dates";
 import {urlFor} from "../../lib/image";
+import {article, breadcrumbs} from "../../lib/schema";
 
 export async function getStaticPaths() {
   const {getPosts: loadPosts} = await import("../../lib/content");
@@ -62,6 +63,15 @@ const shareLinks = (ui.shareTargets ?? [])
   }));
 
 const tags = post.tags ?? [];
+
+const jsonLd = [
+  article(post, settings),
+  breadcrumbs([
+    {name: settings?.siteName ?? "LuxCuero", path: "/"},
+    {name: blogHeading ?? "Blog", path: "/blog"},
+    {name: post.title, path: `/blog/${post.slug}`},
+  ]),
+];
 ---
 
 {/* The source serves blog posts under a solid header that pushes the cover down, unlike
@@ -72,6 +82,7 @@ const tags = post.tags ?? [];
   shareImage={post.seo?.shareImage ?? post.cover}
   ogType="article"
   publishedTime={post.publishedAt}
+  jsonLd={jsonLd}
   transparentHeader={false}
 >
   <!-- Cover band (source: o_wblog_post_page_cover o_half_screen_height, min-height 55vh) -->

@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import PageBuilder from "../components/PageBuilder.astro";
 import {getPage, getPageSlugs, getSiteSettings} from "../lib/content";
+import {localBusiness, faqPage} from "../lib/schema";
 
 /* One route for every `page` document. Astro hoists getStaticPaths into its own module
    context, so everything it needs is imported at module scope rather than closed over
@@ -33,12 +34,25 @@ const heroImage = page.pageBuilder?.find(
   (section: any) => section._type === "heroSection",
 )?.backgroundImage;
 const shareImage = page.seo?.shareImage ?? heroImage;
+
+/* The business entity belongs on one page only -- repeating it per route would describe
+   several businesses rather than one. The FAQ entity follows its section, which today
+   means the home page and /soluciones. */
+const faqItems = page.pageBuilder?.find(
+  (section: any) => section._type === "faqSection",
+)?.items;
+
+const jsonLd = [
+  pageSlug === "/" ? localBusiness(settings) : null,
+  faqPage(faqItems),
+];
 ---
 
 <Layout
   title={title}
   description={description}
   shareImage={shareImage}
+  jsonLd={jsonLd}
   transparentHeader={page.transparentHeader !== false}
 >
   <PageBuilder sections={page.pageBuilder} settings={settings} />

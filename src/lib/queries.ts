@@ -209,6 +209,8 @@ export const POST_QUERY = defineQuery(`
     "slug": slug.current,
     excerpt,
     publishedAt,
+    // Feeds dateModified on the BlogPosting schema.
+    _updatedAt,
     seo,
     cover{${IMAGE_FRAGMENT}},
     author->{name, avatar{${IMAGE_FRAGMENT}}},

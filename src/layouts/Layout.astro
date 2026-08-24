@@ -17,6 +17,9 @@ interface Props {
   shareImage?: any;
   ogType?: "website" | "article";
   publishedTime?: string;
+  /* JSON-LD entities for this page. Nulls are dropped, so callers can pass a builder's
+     result straight through without checking it first. */
+  jsonLd?: (object | null)[];
 }
 
 const {
@@ -26,7 +29,10 @@ const {
   shareImage,
   ogType = "website",
   publishedTime,
+  jsonLd = [],
 } = Astro.props;
+
+const structuredData = jsonLd.filter(Boolean);
 
 /* Fetched here rather than passed down from every page: the chrome needs it on every
    route, and the loader memoises the query so the build still makes one request. */
@@ -89,6 +95,15 @@ const siteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
     />
     <title>{title}</title>
+    {
+      structuredData.map((entity) => (
+        <script
+          type="application/ld+json"
+          is:inline
+          set:html={JSON.stringify(entity)}
+        />
+      ))
+    }
     <Analytics />
   </head>
   <body>
