@@ -86,6 +86,12 @@ const siteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
     {ogImage && <meta name="twitter:image" content={ogImage} />}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    {/* Font Awesome's stylesheet blocks the first render, so the connection to cdnjs is
+        on the critical path — open it alongside the font hosts rather than paying for
+        DNS, TCP and TLS only once the parser reaches the <link> below. */}
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    {/* Images come from the Sanity CDN, including the hero that is the LCP element. */}
+    <link rel="preconnect" href="https://cdn.sanity.io" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Playfair+Display:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Manrope:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap"
       rel="stylesheet"

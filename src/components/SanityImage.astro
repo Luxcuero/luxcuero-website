@@ -3,13 +3,18 @@ import {urlFor} from "../lib/image";
 
 interface Props {
   image: any;
-  /* Rendered width in CSS pixels. The URL is built at 2x for crisp output on retina. */
+  /* Rendered width in CSS pixels. Drives a 1x/2x srcset. */
   width?: number;
   height?: number;
   alt?: string;
   class?: string;
   style?: string;
   loading?: "lazy" | "eager";
+  /* Only meaningful for images with no fixed width, where the srcset is expressed in
+     w-descriptors and the browser needs to know how wide the image renders. */
+  sizes?: string;
+  /* Set on the LCP image so it is fetched at high priority. */
+  fetchpriority?: "high" | "low" | "auto";
 }
 
 const {
@@ -20,19 +25,42 @@ const {
   class: className,
   style,
   loading = "lazy",
+  sizes,
+  fetchpriority,
 } = Astro.props;
+
+/* Widths offered for full-bleed images: the common device widths, capped at 1920 since
+   nothing here renders wider. The browser picks one using `sizes`. */
+const FLUID_WIDTHS = [480, 768, 1024, 1366, 1600, 1920];
 
 /* Sections render optional images, so a missing one must collapse rather than throw —
    the Empresas card has no image until its source file is re-exported. */
-const src = image?.asset
-  ? (() => {
-      let builder = urlFor(image).auto("format");
-      if (width) builder = builder.width(width * 2);
-      if (height) builder = builder.height(height * 2);
-      if (width && height) builder = builder.fit("crop");
-      return builder.url();
-    })()
-  : null;
+const hasImage = Boolean(image?.asset);
+
+function build(w: number, h?: number) {
+  let builder = urlFor(image).auto("format").width(w);
+  if (h) builder = builder.height(h).fit("crop");
+  return builder.url();
+}
+
+let src: string | null = null;
+let srcset: string | null = null;
+let sizesAttr: string | undefined = sizes;
+
+if (hasImage) {
+  if (width) {
+    /* Fixed-width placement: offer the same crop at 1x and 2x and let the display
+       density decide, rather than shipping 2x to every screen as before. */
+    src = build(width, height);
+    srcset = `${build(width, height)} 1x, ${build(width * 2, height ? height * 2 : undefined)} 2x`;
+  } else {
+    /* Full-bleed: w-descriptors, so a phone fetches a phone-sized file instead of the
+       full-resolution original. */
+    src = build(FLUID_WIDTHS[FLUID_WIDTHS.length - 1]);
+    srcset = FLUID_WIDTHS.map((w) => `${build(w)} ${w}w`).join(", ");
+    sizesAttr = sizes ?? "100vw";
+  }
+}
 
 /* Alt text lives on the image in Sanity; an explicit prop wins for cases where the
    caption supplies it (the before/after pair). */
@@ -43,12 +71,15 @@ const altText = alt ?? image?.alt ?? "";
   src && (
     <img
       src={src}
+      srcset={srcset}
+      sizes={sizesAttr}
       alt={altText}
       class={className}
       style={style}
       loading={loading}
       width={width}
       height={height}
+      fetchpriority={fetchpriority}
     />
   )
 }
