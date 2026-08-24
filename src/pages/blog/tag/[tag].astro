@@ -29,6 +29,7 @@ const description = (blog.tagDescription ?? "").replace("{tag}", label);
 <Layout
   title={`${label} | ${blog.heading} — ${blog.titleSuffix}`}
   description={description}
+  shareImage={blog.coverImage}
 >
   <BlogIndexLayout
     heading={label}

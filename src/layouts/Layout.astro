@@ -3,21 +3,54 @@ import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import WhatsAppButton from "../components/WhatsAppButton.astro";
+import Analytics from "../components/Analytics.astro";
 import {getSiteSettings} from "../lib/content";
+import {urlFor} from "../lib/image";
 
 interface Props {
   title: string;
   description?: string;
   transparentHeader?: boolean;
+  /* Sanity image used for the social card. Pages pass seo.shareImage, falling back to
+     something already on the page (the hero photo, a post's cover) so a card is never
+     empty just because nobody filled the optional field in. */
+  shareImage?: any;
+  ogType?: "website" | "article";
+  publishedTime?: string;
 }
 
-const {title, description, transparentHeader = true} = Astro.props;
+const {
+  title,
+  description,
+  transparentHeader = true,
+  shareImage,
+  ogType = "website",
+  publishedTime,
+} = Astro.props;
 
 /* Fetched here rather than passed down from every page: the chrome needs it on every
    route, and the loader memoises the query so the build still makes one request. */
 const settings = await getSiteSettings();
 
 const metaDescription = description ?? settings?.defaultSeo?.description ?? "";
+
+/* One canonical URL per page, matching the no-trailing-slash form the sitemap emits.
+   Both /servicios and /servicios/ resolve, so without this the two are competing
+   duplicates as far as a crawler is concerned. */
+const canonicalURL = new URL(Astro.url.pathname.replace(/(?!^)\/$/, ""), Astro.site);
+
+/* Facebook and WhatsApp want a landscape card; 1200x630 is the size both document.
+   Cropping through the CDN means the source asset can be any shape and the hotspot set
+   in the Studio decides what survives the crop. */
+const shareSource = shareImage ?? settings?.logo;
+const ogImage = shareSource?.asset
+  ? new URL(urlFor(shareSource).width(1200).height(630).fit("crop").auto("format").url())
+      .href
+  : null;
+
+/* Search Console's HTML-tag verification. Unset is the normal state once ownership is
+   established by DNS, so this renders nothing rather than an empty tag. */
+const siteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 ---
 
 <!doctype html>
@@ -26,7 +59,25 @@ const metaDescription = description ?? settings?.defaultSeo?.description ?? "";
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={canonicalURL.href} />
+    {siteVerification && <meta name="google-site-verification" content={siteVerification} />}
     <link rel="icon" href="/images/home/favicon.ico" />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalURL.href} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:locale" content="es_AR" />
+    {settings?.siteName && <meta property="og:site_name" content={settings.siteName} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogImage && <meta property="og:image:width" content="1200" />}
+    {ogImage && <meta property="og:image:height" content="630" />}
+    {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={metaDescription} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -38,6 +89,7 @@ const metaDescription = description ?? settings?.defaultSeo?.description ?? "";
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
     />
     <title>{title}</title>
+    <Analytics />
   </head>
   <body>
     <a href="#main-content" class="skip-link">{settings?.ui?.skipToContent}</a>

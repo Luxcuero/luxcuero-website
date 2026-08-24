@@ -1,0 +1,41 @@
+---
+/* Google Analytics 4.
+
+   The Measurement ID is not a secret — it ships in the page either way — but it lives in
+   an env var so the same source can build against a staging property, and so a missing
+   value degrades to "no analytics" rather than to a broken tag. Set
+   PUBLIC_GA_MEASUREMENT_ID in .env locally and in Vercel's project settings for the
+   deployed site; without it this component renders nothing at all.
+
+   Gated on PROD so `astro dev` and preview builds never write into the property — local
+   page views would otherwise show up as real traffic. */
+const measurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
+const enabled = import.meta.env.PROD && Boolean(measurementId);
+
+/* A production build with no Measurement ID is almost always a missing Vercel env var
+   rather than a deliberate choice, and the symptom otherwise is silence — no tag, no
+   error, no data. Fail loudly in the build log instead. */
+if (import.meta.env.PROD && !measurementId) {
+  console.warn(
+    "[analytics] PUBLIC_GA_MEASUREMENT_ID is not set - this build ships WITHOUT Google Analytics.",
+  );
+}
+---
+
+{
+  enabled && (
+    <>
+      <script async src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} />
+      {/* define:vars wraps this in an IIFE, so gtag has to be hung off window explicitly —
+          the stock GA snippet relies on it being global for later event calls. */}
+      <script is:inline define:vars={{measurementId}}>
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function gtag() {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", measurementId);
+      </script>
+    </>
+  )
+}

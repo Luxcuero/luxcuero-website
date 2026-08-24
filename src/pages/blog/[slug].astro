@@ -69,6 +69,9 @@ const tags = post.tags ?? [];
 <Layout
   title={`${post.title} | ${settings?.siteName}`}
   description={post.seo?.description ?? post.excerpt}
+  shareImage={post.seo?.shareImage ?? post.cover}
+  ogType="article"
+  publishedTime={post.publishedAt}
   transparentHeader={false}
 >
   <!-- Cover band (source: o_wblog_post_page_cover o_half_screen_height, min-height 55vh) -->

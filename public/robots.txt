@@ -1,0 +1,8 @@
+# https://www.luxcuero.com/robots.txt
+# Every page on the site is meant to be crawled; nothing is gated or private.
+# _astro/ is deliberately left open — Google needs the CSS and JS to render the pages.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://www.luxcuero.com/sitemap-index.xml

@@ -10,7 +10,11 @@ const heading = blog.heading;
 const tagline = blog.tagline;
 ---
 
-<Layout title={[heading, blog.titleSuffix].filter(Boolean).join(" | ")} description={tagline}>
+<Layout
+  title={[heading, blog.titleSuffix].filter(Boolean).join(" | ")}
+  description={tagline}
+  shareImage={blog.coverImage}
+>
   <BlogIndexLayout
     heading={heading}
     tagline={tagline}

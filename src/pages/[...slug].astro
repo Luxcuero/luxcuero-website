@@ -26,8 +26,20 @@ if (!page) {
 
 const title = page.seo?.title ?? page.title;
 const description = page.seo?.description ?? settings?.defaultSeo?.description;
+
+/* Nobody has filled in seo.shareImage on any page yet, so fall back to the hero photo the
+   page already opens with — it is the most representative image on every route. */
+const heroImage = page.pageBuilder?.find(
+  (section: any) => section._type === "heroSection",
+)?.backgroundImage;
+const shareImage = page.seo?.shareImage ?? heroImage;
 ---
 
-<Layout title={title} description={description} transparentHeader={page.transparentHeader !== false}>
+<Layout
+  title={title}
+  description={description}
+  shareImage={shareImage}
+  transparentHeader={page.transparentHeader !== false}
+>
   <PageBuilder sections={page.pageBuilder} settings={settings} />
 </Layout>
