@@ -30,6 +30,22 @@ const {
 const shapeUrl = shapeImage?.asset ? urlFor(shapeImage).url() : null;
 
 const waHref = whatsappHref(settings?.whatsappNumber, settings?.whatsappMessage);
+
+/* The endpoint reads the field definitions back from this page's document, so the form
+   only has to say which page it is on. Taken from the URL rather than passed down,
+   since that is the same value the route was built from. */
+const formSlug = Astro.url.pathname.replace(/^\/|\/$/g, "");
+
+/* Feedback lines, and the attachment ceiling the endpoint enforces. Checking the size
+   here too means an over-large upload fails instantly instead of after the round trip —
+   Vercel rejects a body over 4.5 MB before the function runs at all. */
+const formStrings = {
+  sending: settings?.ui?.formSending ?? "Enviando…",
+  success: settings?.ui?.formSuccess ?? "¡Gracias! Recibimos tu mensaje.",
+  error: settings?.ui?.formError ?? "No pudimos enviar tu mensaje. Intentá de nuevo.",
+  tooLarge: settings?.ui?.formTooLarge ?? "Las fotos superan el tamaño máximo.",
+  maxBytes: 3.5 * 1024 * 1024,
+};
 ---
 
 {
@@ -46,8 +62,26 @@ const waHref = whatsappHref(settings?.whatsappNumber, settings?.whatsappMessage)
             <h1 class="rfs-40">{heading}</h1>
             {lead && <p class="lead">{lead}</p>}
 
-            {/* No form endpoint yet — same placeholder action as the quote page. */}
-            <form class="sol-form-rows" method="post" action="#">
+            {/* Submitted over fetch by the script at the foot of this file; the plain
+                action is what a scriptless browser would post to, and the endpoint
+                answers both the same way. */}
+            <form
+              class="sol-form-rows contact-form"
+              method="post"
+              action="/api/contact"
+              enctype="multipart/form-data"
+              data-strings={JSON.stringify(formStrings)}
+            >
+              <input type="hidden" name="form" value={formSlug} />
+              {/* Honeypot: off-screen and unlabelled, so only a bot fills it. */}
+              <input
+                type="text"
+                name="website"
+                class="contact-honeypot"
+                tabindex="-1"
+                autocomplete="off"
+                aria-hidden="true"
+              />
               {fields.map((field: any, i: number) => (
                 <div class:list={["sol-field", field.halfWidth && "sol-field-half"]}>
                   <FormField field={field} prefix="sol" id={`sol-field-${i}`} />
@@ -62,6 +96,7 @@ const waHref = whatsappHref(settings?.whatsappNumber, settings?.whatsappMessage)
                 >
                   {submitLabel}
                 </button>
+                <p class="contact-status" role="status" aria-live="polite" />
               </div>
             </form>
           </div>
@@ -133,8 +168,24 @@ const waHref = whatsappHref(settings?.whatsappNumber, settings?.whatsappMessage)
           <div class="cu-info-right">
             <h2>{heading}</h2>
 
-            {/* No form endpoint yet — field names match the source's helpdesk.ticket form. */}
-            <form class="cu-form" method="post" action="#" enctype="multipart/form-data">
+            {/* Field names still match the source's helpdesk.ticket form; the endpoint
+                reads them back from Sanity to label the email it sends. */}
+            <form
+              class="cu-form contact-form"
+              method="post"
+              action="/api/contact"
+              enctype="multipart/form-data"
+              data-strings={JSON.stringify(formStrings)}
+            >
+              <input type="hidden" name="form" value={formSlug} />
+              <input
+                type="text"
+                name="website"
+                class="contact-honeypot"
+                tabindex="-1"
+                autocomplete="off"
+                aria-hidden="true"
+              />
               {fields.map((field: any, i: number) => (
                 <div class="cu-field">
                   <div class="cu-field-row">
@@ -151,6 +202,7 @@ const waHref = whatsappHref(settings?.whatsappNumber, settings?.whatsappMessage)
                 <button type="submit" class="cu-send">
                   <span>{submitLabel}</span>
                 </button>
+                <p class="contact-status" role="status" aria-live="polite" />
               </div>
             </form>
           </div>
@@ -571,9 +623,100 @@ const waHref = whatsappHref(settings?.whatsappNumber, settings?.whatsappMessage)
     font-weight: 700;
     line-height: 1.5;
   }
+
+  /* ── Submission state, shared by both forms ─────────────────────────────
+     The honeypot has to be reachable by a bot parsing the markup, so it is moved out of
+     sight rather than hidden with `display: none`. */
+  .contact-honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .contact-status {
+    margin-top: 12px;
+    font-size: 15px;
+    line-height: 1.4;
+    text-align: left;
+  }
+  .cu-submit .contact-status {
+    text-align: center;
+  }
+  .contact-status[data-state="error"] {
+    color: #b3261e;
+  }
+  .contact-status[data-state="success"] {
+    color: rgb(107, 165, 74);
+    font-weight: 700;
+  }
+  .contact-form[data-state="sending"] :is(button, input, textarea, select) {
+    opacity: 0.6;
+    pointer-events: none;
+  }
 </style>
 
 <script>
+  /* Both enquiry forms post to /api/contact over fetch so the page keeps its scroll
+     position and the answer can be shown in place. Without JS the same form still
+     posts natively to the same endpoint, which then replies with JSON — worse, but not
+     a dead end. */
+  document.querySelectorAll("form.contact-form").forEach((form) => {
+    if (!(form instanceof HTMLFormElement)) return;
+    const status = form.querySelector(".contact-status");
+    const strings = JSON.parse(form.dataset.strings ?? "{}");
+
+    const say = (state, message) => {
+      if (!(status instanceof HTMLElement)) return;
+      status.dataset.state = state;
+      status.textContent = message;
+    };
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (form.dataset.state === "sending") return;
+
+      const data = new FormData(form);
+
+      /* Photos are the one field that can exceed what the function will accept, and the
+         browser knows the sizes before anything is uploaded. */
+      let attachedBytes = 0;
+      for (const value of data.values()) {
+        if (value instanceof File) attachedBytes += value.size;
+      }
+      if (attachedBytes > strings.maxBytes) {
+        say("error", strings.tooLarge);
+        return;
+      }
+
+      form.dataset.state = "sending";
+      say("sending", strings.sending);
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: data,
+          headers: {accept: "application/json"},
+        });
+        const result = await response.json().catch(() => ({ok: false}));
+
+        if (response.ok && result.ok) {
+          form.reset();
+          say("success", strings.success);
+        } else if (result.error === "missing" && Array.isArray(result.fields)) {
+          say("error", `${strings.error} (${result.fields.join(", ")})`);
+        } else {
+          say("error", strings.error);
+        }
+      } catch {
+        say("error", strings.error);
+      } finally {
+        delete form.dataset.state;
+      }
+    });
+  });
+
   document.querySelectorAll("[data-date-for]").forEach((button) => {
     button.addEventListener("click", () => {
       const input = document.getElementById(button.getAttribute("data-date-for") ?? "");

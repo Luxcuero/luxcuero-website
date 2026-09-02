@@ -250,3 +250,16 @@ export const POSTS_BY_TAG_QUERY = defineQuery(`
     }
   }
 `)
+
+/* The fields of the enquiry form on a given page.
+
+   /api/contact reads the definition rather than trusting the submission: the browser
+   sends names and values, and this is what turns them back into the labels the email
+   shows — and what decides which names are accepted at all. */
+export const CONTACT_FORM_QUERY = defineQuery(`
+  *[_type == "page" && slug.current == $slug][0]
+    .pageBuilder[_type == "contactFormSection"][0]{
+      heading,
+      fields[]{label, name, inputType, required}
+    }
+`)

@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
+import vercel from '@astrojs/vercel';
 
 /* This file runs before Astro wires up import.meta.env, and `vite` is not a direct
    dependency so its loadEnv is not importable under pnpm. Node's own .env loader covers
@@ -71,6 +72,10 @@ export default defineConfig({
   devToolbar: {
     enabled: false
   },
+  /* Every page is still prerendered at build time; the adapter is here so the one route
+     that cannot be — /api/contact, which needs the Resend key server-side — is deployed
+     as a Vercel function alongside the static output. */
+  adapter: vercel(),
   integrations: [
     sitemap({
       // Tag pages are one-post archives; they add crawl paths without adding content.
