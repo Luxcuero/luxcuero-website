@@ -1,0 +1,63 @@
+```astro
+---
+// src/pages/links.astro
+import Layout from '../layouts/Layout.astro';
+
+const links = [
+  {
+    title: 'Nuestros trabajos',
+    url: 'https://example.com/nuestros-trabajos',
+  },
+  {
+    title: 'WhatsApp',
+    url: 'https://wa.me/yourphonenumber',
+  },
+  {
+    title: 'Instagram',
+    url: 'https://instagram.com/luxcuero',
+  },
+];
+---
+
+<Layout title="Luxcuero - Enlaces">
+  <main class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden p-8 sm:p-12 text-center">
+      <!-- Avatar -->
+      <div class="mx-auto w-32 h-32 mb-6 rounded-full overflow-hidden border-4 border-gray-100 shadow-sm">
+        <img
+          src="/logo-luxcuero.png"
+          alt="Luxcuero Logo"
+          class="w-full h-full object-cover"
+        />
+      </div>
+
+      <!-- Title / Name -->
+      <h1 class="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Luxcuero</h1>
+      
+      <!-- Bio / Description -->
+      <p class="text-lg text-gray-500 mb-8 max-w-xs mx-auto">
+        Tu cuero, como nuevo. ¿Para qué cambiás si podés restaurar?
+      </p>
+
+      <!-- Links -->
+      <nav class="space-y-4">
+        {links.map(link => (
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block w-full py-4 px-6 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+          >
+            {link.title}
+          </a>
+        ))}
+      </nav>
+
+      <!-- Footer/Credits -->
+      <div class="mt-12 text-sm text-gray-400">
+        <p>&copy; {new Date().getFullYear()} Luxcuero. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </main>
+</Layout>
+```
